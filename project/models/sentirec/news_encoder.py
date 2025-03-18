@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models.utils import AdditiveAttention
+from torch import Tensor
 
 
 class NewsEncoder(nn.Module):
-    def __init__(self, config, pretrained_word_embedding):
+    def __init__(self, config, pretrained_word_embedding:Tensor):
         super(NewsEncoder, self).__init__()
         self.config = config
         self.word_embedding = nn.Embedding.from_pretrained(

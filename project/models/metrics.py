@@ -13,7 +13,7 @@ class AUC(Metric):
     def update(self, preds: torch.Tensor, target: torch.Tensor):
         preds, target = preds.squeeze(dim=0), target.squeeze(dim=0)
         assert preds.shape == target.shape
-        self.auc += auroc(preds, target)
+        self.auc += auroc(preds, target, task="binary")
         self.count += 1.0
 
     def compute(self):

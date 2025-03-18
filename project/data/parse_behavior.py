@@ -41,7 +41,7 @@ def load_idx_map_as_dict(file_name):
 def generate_training_data(behavior, out_dir):
     print("preparing training data")
     random.seed(1234)
-    with open(path.join(out_dir, "train_behavior.tsv"), 'w') as train_out:
+    with open(path.join(out_dir, "train_behavior.tsv"), 'w', newline='') as train_out:
         train_writer = csv.writer(train_out, delimiter='\t')
         user2int = {}
         for b in tqdm(behavior): 
@@ -58,7 +58,7 @@ def generate_training_data(behavior, out_dir):
                 mask = " ".join(["1"]+["0"]*args.n_negative)
                 out = [user2int[userid], click, pair, mask]
                 train_writer.writerow(out)
-        with open(path.join(out_dir, 'user2int.tsv'), 'w') as file:  
+        with open(path.join(out_dir, 'user2int.tsv'), 'w', newline='') as file:  
             user_writer = csv.writer(file, delimiter='\t')
             for key, value in user2int.items():
                 user_writer.writerow([key, value])
@@ -67,7 +67,7 @@ def generate_training_data(behavior, out_dir):
 # <uid>,<news ids of clickhistory>,<candidate ids><click mask>
 def generate_eval_data(behavior, out_dir, out_file_name, user2int):
     print("preparing eval data")
-    with open(path.join(out_dir, out_file_name), 'w') as eval_out:
+    with open(path.join(out_dir, out_file_name), 'w', newline='') as eval_out:
         eval_writer = csv.writer(eval_out, delimiter='\t')
         for b in tqdm(behavior): 
             imp_id, userid, imp_time, click, imps = b.strip().split("\t")

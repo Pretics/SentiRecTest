@@ -6,21 +6,24 @@ name: sentirec
 #
 # DATA
 #
+# dataset size
+dataset_size: "demo"
+preprocess_data_path: "data/processed"
 # behavior
-train_behavior: "data/train/train_behavior.tsv"
-val_behavior: "data/train/val_behavior.tsv"
-test_behavior: "data/test/test_behavior.tsv"
+train_behavior: "train/train_behavior.tsv"
+val_behavior: "train/val_behavior.tsv"
+test_behavior: "test/test_behavior.tsv"
 # news
-train_news: "data/train/parsed_news.tsv"
-test_news: "data/test/parsed_news.tsv"
+train_news: "train/parsed_news.tsv"
+test_news: "test/parsed_news.tsv"
 # idx maps 
-user2int: "data/train/user2int.tsv"
-word2int: "data/test/word2int.tsv"
-category2int: "data/train/category2int.tsv"
+user2int: "train/user2int.tsv"
+word2int: "test/word2int.tsv"
+category2int: "train/category2int.tsv"
 # word embedding weights --> here use the embedding_weights 
 # resulting after the test news processing
 # so link to <test_dir>/embedding_weights.csv
-embedding_weights: "data/test/embedding_weights.csv"
+embedding_weights: "test/embedding_weights.csv"
 
 max_history: 50  # Number of sampled click history for each user
 num_words_title: 20
@@ -76,27 +79,31 @@ early_stop:
 
 # DataLoader
 train_dataloader:
-  num_workers: 8
+  num_workers: 0
+  persistent_workers: False
   batch_size: 64
-  shuffle: True
+  #shuffle: True
   drop_last: True
 val_dataloader:
-  num_workers: 16
+  num_workers: 0
+  persistent_workers: False
   batch_size: 1 # must be one by design TODO make it better :)
-  shuffle: False
+  #shuffle: False
   drop_last: False
 test_dataloader:
-  num_workers: 16
+  num_workers: 0
+  persistent_workers: False
   batch_size: 1 # must be one by design TODO make it better :)
-  shuffle: False
+  #shuffle: False
   drop_last: False
 
 # Trainer
 trainer:
   max_epochs: 100
-  gpus: -1
-  accelerator: "ddp"
-  weights_summary: "top"
+  devices: 1
+  accelerator: "gpu"
+  strategy: "auto"
+  #weights_summary: "top"
   fast_dev_run: False
 #DDPPlugin
 find_unused_parameters: False

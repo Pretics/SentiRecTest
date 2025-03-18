@@ -1,3 +1,52 @@
+# 개인용 명령어 사전
+
+# ps1 실행법
+
+.\prep_download.ps1 -size demo
+.\prep_process.ps1 -size demo
+
+# 데이터 전처리
+``project/data 폴더 내에서 실행``
+1. Download the MIND dataset and the Glove embeddings
+2. Create two directories ``<train_dir>`` and ``<test_dir>``; one for training and for the testing data.
+3. Preprocess the impression logs of the mind-trainig data as follows: 
+```
+python parse_behavior.py --in-file mind/train/behaviors.tsv --out-dir train --mode train
+```
+4. Preprocess the impressions logs of the mind-test data as follows:
+```
+python parse_behavior.py --in-file mind/test/behaviors.tsv --out-dir test --mode test --user2int train/user2int.tsv 
+```
+5. Preprocess the news content of the mind-train data as follows:
+```
+python parse_news.py --in-file mind/train/news.tsv --out-dir train --mode train --word-embeddings glove.840B.300d.txt
+```
+6. Preprocess the news content of the mind-test data as follows: 
+```
+python parse_news.py --in-file mind/test/news.tsv --out-dir test --mode test --word-embeddings glove.840B.300d.txt --embedding-weights train/embedding_weights.csv  --word2int train/word2int.tsv --category2int train/category2int.tsv  
+```
+
+# 실행
+``project 폴더 내에서 실행``
+1. SentiRec 
+- Train
+python train.py --config config/model/sentirec/vader_lambda0p4_mu10.yaml
+- Test
+python test.py --config config/model/sentirec/vader_lambda0p4_mu10.yaml --ckpt logs/lightning_logs/checkpoints/sentirec/vader_lambda0p4_mu10/<ckpt파일 위치>
+
+ex) epoch=20-val_auc_epoch=0.6618.ckpt
+
+2. NRMS
+- Train
+python train.py --config config/model/nrms/exp1.yaml
+- Test
+python test.py --config config/model/nrms/exp1.yaml --ckpt logs/lightning_logs/checkpoints/nrms/exp1/<ckpt파일 위치>
+
+# 모니터링
+``project 폴더 내에서 실행``
+tensorboard --logdir logs/lightning_logs/tensorboard/sentirec/vader_lambda0p4_mu10/test
+
+
 # NewsRec
 Welcome 👋 to the repo of our paper:
 

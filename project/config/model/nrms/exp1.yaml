@@ -67,27 +67,31 @@ early_stop:
 
 # DataLoader
 train_dataloader:
-  num_workers: 8
+  num_workers: 0
+  persistent_workers: False
   batch_size: 64
-  shuffle: True
+  #shuffle: True
   drop_last: True
 val_dataloader:
-  num_workers: 16
+  num_workers: 0
+  persistent_workers: False
   batch_size: 1 # must be one by design TODO make it better :)
-  shuffle: False
+  #shuffle: False
   drop_last: False
 test_dataloader:
-  num_workers: 16
+  num_workers: 0
+  persistent_workers: False
   batch_size: 1 # must be one by design TODO make it better :)
-  shuffle: False
+  #shuffle: False
   drop_last: False
 
 # Trainer
 trainer:
   max_epochs: 100
-  gpus: -1
-  accelerator: "ddp"
-  weights_summary: "top"
+  devices: 1
+  accelerator: "gpu"
+  strategy: "auto"
+  #weights_summary: "top"
   fast_dev_run: False
 #DDPPlugin
 find_unused_parameters: False

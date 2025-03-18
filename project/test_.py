@@ -57,7 +57,6 @@ def cli_main():
     # ------------
     # data
     # ------------
-
     preprocess_path = f"{config.preprocess_data_path}/{config.dataset_size}/"
 
     test_dataset = BaseDataset(
@@ -137,16 +136,7 @@ def cli_main():
     # ------------
     # Test
     # ------------
-    trainer = Trainer(
-        **config.trainer,
-        logger=logger,
-        #plugins=DDPPlugin(find_unused_parameters=False)
-    )
-
-    trainer.test(
-        model=model, 
-        dataloaders=test_loader
-    )
+    print(test_dataset)
     # trainer.test()
 
 if __name__ == '__main__':

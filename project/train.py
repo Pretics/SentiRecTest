@@ -9,7 +9,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning import Trainer
-from pytorch_lightning.plugins import DDPPlugin
+from pytorch_lightning.strategies import DDPStrategy
 from models.lstur import LSTUR
 from models.nrms import NRMS
 from models.naml import NAML
@@ -35,13 +35,15 @@ def cli_main():
         '--resume',
         action='store',
         dest='resume',
-        help='resume training form ckpt',
+        help='resume training from ckpt',
         required=False)
     args = parser.parse_args()
     
     with open(args.config, 'r') as ymlfile:
         config = yaml.load(ymlfile, Loader=yaml.FullLoader)
         config = DotMap(config)
+
+    print(config)
 
     assert(config.name in ["lstur", "nrms", "naml", "naml_simple", "sentirec", "robust_sentirec"])
 
@@ -60,13 +62,16 @@ def cli_main():
     # ------------
     # data
     # ------------
+
+    preprocess_path = f"{config.preprocess_data_path}/{config.dataset_size}/"
+
     train_dataset = BaseDataset(
-        path.join(config.train_behavior),
-        path.join(config.train_news), 
+        path.join(preprocess_path+config.train_behavior),
+        path.join(preprocess_path+config.train_news), 
         config)
     val_dataset = BaseDataset(
-        path.join(config.val_behavior),
-        path.join(config.train_news), 
+        path.join(preprocess_path+config.val_behavior),
+        path.join(preprocess_path+config.train_news), 
         config) 
     train_loader = DataLoader(
         train_dataset,
@@ -80,7 +85,7 @@ def cli_main():
     # ------------
     # load embedding pre-trained embedding weights
     embedding_weights=[]
-    with open(config.embedding_weights, 'r') as file: 
+    with open(path.join(preprocess_path+config.embedding_weights), 'r') as file: 
         lines = file.readlines()
         for line in tqdm(lines):
             weights = [float(w) for w in line.split(" ")]
@@ -119,7 +124,8 @@ def cli_main():
             **config.trainer,
             callbacks=[early_stop_callback, checkpoint_callback],
             logger=logger,
-            plugins=DDPPlugin(find_unused_parameters=config.find_unused_parameters), 
+            #strategy=DDPStrategy(process_group_backend="gloo"),
+            #plugins=DDPPlugin(find_unused_parameters=config.find_unused_parameters), 
             resume_from_checkpoint=args.resume
         )
     else:
@@ -127,11 +133,12 @@ def cli_main():
             **config.trainer,
             callbacks=[early_stop_callback, checkpoint_callback],
             logger=logger,
-            plugins=DDPPlugin(find_unused_parameters=config.find_unused_parameters)
+            #strategy=DDPStrategy(process_group_backend="gloo")
+            #plugins=DDPPlugin(find_unused_parameters=config.find_unused_parameters)
         )
     trainer.fit(
         model=model, 
-        train_dataloader=train_loader, 
+        train_dataloaders=train_loader, 
         val_dataloaders=val_loader)
 
 if __name__ == '__main__':

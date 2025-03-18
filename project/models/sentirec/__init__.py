@@ -8,14 +8,18 @@ from models.sentirec.news_encoder import NewsEncoder
 from models.sentirec.user_encoder import UserEncoder
 from models.utils import TimeDistributed
 from models.metrics import NDCG, MRR, AUC, SentiMRR, Senti, TopicMRR, Topic, ILS_Senti, ILS_Topic
-
+from torch import Tensor
 
 class SENTIREC(pl.LightningModule):
     """
     SENTIREC network.
     """
 
-    def __init__(self, config=None, pretrained_word_embedding=None):
+    def __init__(
+            self, 
+            config=None, 
+            pretrained_word_embedding:Tensor=None
+        ):
         super(SENTIREC, self).__init__()
         self.config = config
         news_encoder = NewsEncoder(config, pretrained_word_embedding)
@@ -76,6 +80,15 @@ class SENTIREC(pl.LightningModule):
         
 
     def forward(self, batch):
+        """
+        word_embedding = self.news_encoder.module.word_embedding
+
+        print(f"batch['c_title'].max(): {batch['c_title'].max()}, embedding weight size: {word_embedding.weight.shape[0]}")
+        assert batch["c_title"].max() < word_embedding.weight.shape[0], "ERROR: Index out of bounds!"
+
+        print(f"batch['c_title'].min(): {batch['c_title'].min()}")
+        assert batch["c_title"].min() >= 0, "ERROR: Negative index found in batch['c_title']!"
+        """
         # encode candidate news
         candidate_news_vector = self.news_encoder(batch["c_title"])
         # encode history 
