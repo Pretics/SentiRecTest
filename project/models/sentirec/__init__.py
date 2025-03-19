@@ -79,7 +79,6 @@ class SENTIREC(pl.LightningModule):
         })
         
 
-    def forward(self, batch):
         """
         word_embedding = self.news_encoder.module.word_embedding
 
@@ -89,6 +88,7 @@ class SENTIREC(pl.LightningModule):
         print(f"batch['c_title'].min(): {batch['c_title'].min()}")
         assert batch["c_title"].min() >= 0, "ERROR: Negative index found in batch['c_title']!"
         """
+    def forward(self, batch):
         # encode candidate news
         candidate_news_vector = self.news_encoder(batch["c_title"])
         # encode history 
