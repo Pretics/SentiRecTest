@@ -39,7 +39,8 @@ powershell 스크립트, ``.ipynb`` 두 가지 방법 중 하나만 실행하면
 ## project/data 내의 prep.ipynb 혹은 prep_combined.ipynb
 ``prep.ipynb``와 ``prep_combined.ipynb``의 차이는 Train/Test 데이터셋의 전처리를 나눠서 진행하는지, 한번에 진행하는지의 차이입니다.
 ## 터미널 명령어
-별로 추천하지 않는 방법입니다.
+별로 추천하지 않는 방법입니다. <br/>
+``<size>`` 부분을 사용할 데이터셋의 크기에 맞게 변경해야 하며, 데이터셋을 미리 다운 받아야 합니다. <br/>
 (``project/data`` 폴더 내에서 실행)
 1. behaviors.tsv 전처리 (impression logs)
 ```
