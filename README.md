@@ -1,15 +1,15 @@
 # SentiRec 수정 버전
 ### Original Code: https://github.com/MeteSertkan/newsrec
 #### 변경 사항
-1. pytorch, torch_lightning, torchmetrics 등 학습 관련 라이브러리를 최신 버전으로 업그레이드 하고, 해당 버전에 맞게 코드 일부를 수정했습니다.
+1. ``pytorch``, ``torch_lightning``, ``torchmetrics`` 등 학습 관련 라이브러리를 최신 버전으로 업그레이드 하고, 해당 버전에 맞게 코드 일부를 수정했습니다.
 2. 윈도우에서 정상적으로 학습이 진행되도록 수정했습니다. (Ubuntu 환경에서 테스트는 아직 못 해봤습니다.)
-3. 데이터 전처리를 담당하는 ``parse_behavior.py``와 ``parse_news.py``를 (개인적으로)좀 더 가독성 있게 수정하고, ``prep.sh에 대응되는`` ``prep_download.ps1``, ``prep_process.ps1``을 만들었습니다. 
-4. 데이터 전처리, 학습, 테스트를 단계별로 관찰하기 용이하도록 train.ipynb와 test.ipynb를 만들었습니다. (각각의 파일은 train.py, test.py와 완전히 동일한 작업을 수행합니다.)
+3. 데이터 전처리를 담당하는 ``parse_behavior.py``와 ``parse_news.py``를 (개인적으로)좀 더 가독성 있게 수정하고, ``prep.sh``에 대응되는 ``prep_download.ps1``, ``prep_process.ps1``을 만들었습니다. 
+4. 데이터 전처리, 학습, 테스트를 단계별로 관찰하기 용이하도록 ``train.ipynb``와 ``test.ipynb``를 만들었습니다. (각각의 파일은 ``train.py``, ``test.py``와 완전히 동일한 작업을 수행합니다.)
 
 # 데이터 전처리
-.ps1, .ipynb 파일 둘 중 하나만 실행하면 됩니다. 둘 다 동일하게 동작합니다.
+``.ps1``, ``.ipynb`` 파일 둘 중 하나만 실행하면 됩니다. 둘 다 동일하게 동작합니다.
 ## powershell 스크립트
-(project/data 폴더 내에서 powershell 터미널로 실행)
+(``project/data`` 폴더 내에서 powershell 터미널로 실행)
 #### 데이터셋 다운로드
 ```
 .\prep_download.ps1 -size <demo/small/large>
@@ -23,7 +23,7 @@
 
 # 모델 학습
 ## 터미널 명령어
-(project 폴더 내에서 실행)
+(``project`` 폴더 내에서 실행)
 #### Train
 ```
 python train.py --config <config_path>
@@ -32,17 +32,17 @@ python train.py --config <config_path>
 ```
 python test.py --config <config_path> --ckpt <ckpt_path>
 ```
-<config_path> example: ``./config/model/sentirec/vader_lambda0p4_mu10.yaml`` <br/>
+``<config_path>`` example: ``./config/model/sentirec/vader_lambda0p4_mu10.yaml`` <br/>
 
-<ckpt_path> example: ``./logs/lightning_logs/checkpoints/sentirec/vader_lambda0p4_mu10/epoch=X-val_auc_epoch=0.XXXX.ckpt`` <br/>
+``<ckpt_path>`` example: ``./logs/lightning_logs/checkpoints/sentirec/vader_lambda0p4_mu10/epoch=X-val_auc_epoch=0.XXXX.ckpt`` <br/>
 
 # 모니터링
 ## 터미널 명령어
-(project 폴더 내에서 실행)
+(``project`` 폴더 내에서 실행)
 ```
 tensorboard --logdir <path_to_tensorboard_logdir>
 ```
-<path_to_tensorboard_logdir> example: ``logs/lightning_logs/tensorboard/sentirec/vader_lambda0p4_mu10`` <br/>
+``<path_to_tensorboard_logdir>`` example: ``logs/lightning_logs/tensorboard/sentirec/vader_lambda0p4_mu10`` <br/>
 
 내부에 .0 파일이 여러개 존재할 경우 보고싶은 파일 하나를 골라 다른 폴더로 옮겨서 확인하는 것을 추천합니다.
 
