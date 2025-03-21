@@ -11,9 +11,9 @@
 
 # 환경 설정
 ## Conda
-(테스트는 안해봤습니다. 만약 이걸로 안될시 PyTorch 라이브러리를 해당 링크에서 구한 명령어로 설치한 뒤 pytorch_lightning, torchmetrics를 따로 설치해주세요.)
+(테스트는 안 해봤습니다. 만약 이걸로 안 되면 PyTorch 라이브러리를 [해당 링크](https://pytorch.org/get-started/locally/)에서 구한 명령어로 설치한 뒤 pytorch_lightning, torchmetrics를 따로 설치해 주세요.)
 
-1. environment.yml로 가상 환경 설치
+1. 프로젝트에 동봉된 environment.yml로 가상 환경 설치
     ```
     conda env create -f environment.yml
     ```
