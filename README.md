@@ -5,9 +5,10 @@
 2. 윈도우에서 정상적으로 학습이 진행되도록 수정했습니다. (Ubuntu 환경에서 테스트는 아직 못 해봤습니다.)
 3. 데이터 전처리를 담당하는 ``parse_behavior.py``와 ``parse_news.py``를 (개인적으로)좀 더 가독성 있게 수정하고, ``prep.sh``에 대응되는 ``prep_download.ps1``, ``prep_process.ps1``을 만들었습니다. 
 4. 데이터 전처리, 학습, 테스트를 단계별로 관찰하기 용이하도록 ``train.ipynb``와 ``test.ipynb``를 만들었습니다. (각각의 파일은 ``train.py``, ``test.py``와 완전히 동일한 작업을 수행합니다.)
+5. ``parse_behavior.py``와 ``prep_behavior.py``의 핵심 기능을 
 
 # 데이터 전처리
-``.ps1``, ``.ipynb`` 파일 둘 중 하나만 실행하면 됩니다. 둘 다 동일하게 동작합니다.
+powershell 스크립트, ``.ipynb`` 두 가지 방법 중 하나만 실행하면 됩니다. 둘 다 동일하게 동작합니다.
 ## powershell 스크립트
 (``project/data`` 폴더 내에서 powershell 터미널로 실행)
 #### 데이터셋 다운로드
