@@ -51,7 +51,7 @@ python preprocess/parse_behavior_combined.py --train-file MIND/<size>/train/beha
 python preprocess/parse_news_combined.py --train-file MIND/<size>/train/news.tsv --test-file MIND/<size>/test/news.tsv --train-out preprocessed_data/<size>/train --test-out preprocessed_data/<size>/test --word-embeddings word_embeddings/glove.840B.300d.txt
 ```
 ## 터미널 명령어 2
-별로 추천하지 않는 방법입니다. 터미널 명령어 1과 동일한 결과물을 생성합니다. <br/>
+터미널 명령어 1과 동일한 결과물을 생성합니다. <br/>
 ``<size>`` 부분을 사용할 데이터셋의 크기에 맞게 변경해야 하며, 데이터셋을 미리 다운 받아야 합니다. <br/>
 (``project/data`` 폴더 내에서 실행)
 1. Train/Test behaviors.tsv 전처리
@@ -76,7 +76,7 @@ python parse_news.py --in-file MIND/<size>/train/news.tsv --out-dir preprocessed
 ```
 6. Preprocess the news content of the mind-test data as follows: 
 ```
-python parse_news.py --in-file MIND/``<size>``/test/news.tsv --out-dir preprocessed_data/<size>/test --mode test --word-embeddings word_embeddings/glove.840B.300d.txt --embedding-weights preprocessed_data/<size>/train/embedding_weights.csv  --word2int preprocessed_data/<size>/train/word2int.tsv --category2int preprocessed_data/<size>/train/category2int.tsv  
+python parse_news.py --in-file MIND/<size>/test/news.tsv --out-dir preprocessed_data/<size>/test --mode test --word-embeddings word_embeddings/glove.840B.300d.txt --embedding-weights preprocessed_data/<size>/train/embedding_weights.csv  --word2int preprocessed_data/<size>/train/word2int.tsv --category2int preprocessed_data/<size>/train/category2int.tsv  
 ```
 
 
