@@ -32,19 +32,21 @@ python train.py --config <config파일 위치>
 ```
 python test.py --config <config파일 위치> --ckpt <ckpt파일 위치>
 ```
-
-ex) epoch=20-val_auc_epoch=0.6618.ckpt
-
-2. NRMS
-- Train
-python train.py --config config/model/nrms/exp1.yaml
-- Test
-python test.py --config config/model/nrms/exp1.yaml --ckpt logs/lightning_logs/checkpoints/nrms/exp1/<ckpt파일 위치>
+<config파일 위치> 예시: ./config/model/sentirec/vader_lambda0p4_mu10.yaml
+<ckpt파일 위치> 예시: ./logs/lightning_logs/checkpoints/sentirec/vader_lambda0p4_mu10/epoch=X-val_auc_epoch=0.XXXX.ckpt
 
 # 모니터링
-``project 폴더 내에서 실행``
-tensorboard --logdir logs/lightning_logs/tensorboard/sentirec/vader_lambda0p4_mu10/test
+## 터미널 명령어
+(project 폴더 내에서 실행)
+```
+tensorboard --logdir <log파일이 위치한 폴더 위치>
+```
+<log파일이 위치한 폴더 위치> 예시: logs/lightning_logs/tensorboard/sentirec/vader_lambda0p4_mu10
 
+내부에 .0 파일이 여러개 존재할 경우 보고싶은 파일 하나를 골라 다른 폴더로 옮겨서 확인하는 것을 추천합니다.
+
+
+이하 원본 repository의 README 내용입니다.
 
 # NewsRec
 Welcome 👋 to the repo of our paper:
