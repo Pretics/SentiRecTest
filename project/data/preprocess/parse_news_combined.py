@@ -1,5 +1,5 @@
 import argparse
-import prep_news
+import prep_news_combined
 
 #
 # config
@@ -24,6 +24,6 @@ args = parser.parse_args()
 
 
 # prep embedings/vocab
-embeddings = prep_news.process_word_embeddings(args.word_embeddings)
+embeddings = prep_news_combined.process_word_embeddings(args.word_embeddings)
 
-prep_news.prep_news(args, embeddings)
+prep_news_combined.prep_news_combined(args, embeddings)

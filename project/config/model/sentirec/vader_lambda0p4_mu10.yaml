@@ -8,7 +8,7 @@ name: sentirec
 #
 # dataset size
 dataset_size: "demo"
-preprocess_data_path: "data/processed"
+preprocess_data_path: "data/preprocessed_data"
 # behavior
 train_behavior: "train/train_behavior.tsv"
 val_behavior: "train/val_behavior.tsv"

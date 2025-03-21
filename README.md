@@ -1,32 +1,17 @@
-# 개인용 명령어 사전
+# SentiRec 수정 버전
+원본 리포지토리 https://github.com/MeteSertkan/newsrec
 
-# ps1 실행법
-
-.\prep_download.ps1 -size demo
-.\prep_process.ps1 -size demo
+1. pytorch, torch_lightning, torchmetrics 등 학습 관련 라이브러리를 최신 버전으로 업그레이드 하고, 버전에 맞게 코드 일부를 수정했습니다.
+2. 윈도우에서 정상적으로 학습이 진행되도록 수정했습니다.
+3. 데이터 전처리를 담당하는 parse_behavior.py와 parse_news.py를 (개인적으로 보기에는)좀 더 가독성 있게 수정하고, prep.sh에 대응되는 powershell 스크립트 파일을 만들었습니다. 
+4. 데이터 전처리, 학습, 테스트를 단계별로 관찰하기 용이하도록 train.ipynb와 test.ipynb를 만들었습니다. (각각의 파일은 train.py, test.py와 완전히 동일한 작업을 수행합니다.)
 
 # 데이터 전처리
-``project/data 폴더 내에서 실행``
-1. Download the MIND dataset and the Glove embeddings
-2. Create two directories ``<train_dir>`` and ``<test_dir>``; one for training and for the testing data.
-3. Preprocess the impression logs of the mind-trainig data as follows: 
-```
-python parse_behavior.py --in-file mind/train/behaviors.tsv --out-dir train --mode train
-```
-4. Preprocess the impressions logs of the mind-test data as follows:
-```
-python parse_behavior.py --in-file mind/test/behaviors.tsv --out-dir test --mode test --user2int train/user2int.tsv 
-```
-5. Preprocess the news content of the mind-train data as follows:
-```
-python parse_news.py --in-file mind/train/news.tsv --out-dir train --mode train --word-embeddings glove.840B.300d.txt
-```
-6. Preprocess the news content of the mind-test data as follows: 
-```
-python parse_news.py --in-file mind/test/news.tsv --out-dir test --mode test --word-embeddings glove.840B.300d.txt --embedding-weights train/embedding_weights.csv  --word2int train/word2int.tsv --category2int train/category2int.tsv  
-```
+``project/data 폴더 내에서 실행`` <br/>
+.\prep_download.ps1 -size ``<demo/small/large>``
+.\prep_process.ps1 -size ``<demo/small/large>``
 
-# 실행
+# Train, Test 실행법
 ``project 폴더 내에서 실행``
 1. SentiRec 
 - Train

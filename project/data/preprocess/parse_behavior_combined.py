@@ -1,5 +1,5 @@
 import argparse
-import prep_behavior
+import prep_behavior_combined
 
 #
 # config
@@ -23,4 +23,4 @@ parser.add_argument('---n-negative-samples', action='store', dest='n_negative',
 
 args = parser.parse_args()
 
-prep_behavior.prep_behavior(args)
+prep_behavior_combined.prep_behavior_combined(args)

@@ -141,6 +141,6 @@ dask-worker-space/
 *.DS_Store
 
 project/data/MIND/
-project/data/processed/
+project/data/preprocessed_data/
 project/data/word_embeddings/
 project/logs/
