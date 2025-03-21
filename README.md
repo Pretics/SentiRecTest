@@ -26,7 +26,7 @@
 # 데이터 전처리
 powershell 스크립트, ``.ipynb`` 두 가지 방법 중 하나만 실행하면 됩니다. 둘 다 동일하게 동작합니다.
 ## powershell 스크립트
-(``project/data`` 폴더 내에서 powershell 터미널로 실행)
+(``project/data`` 폴더 내에서 실행)
 #### 데이터셋 다운로드
 ```
 .\prep_download.ps1 -size <demo/small/large>
@@ -38,6 +38,17 @@ powershell 스크립트, ``.ipynb`` 두 가지 방법 중 하나만 실행하면
 ``<demo/small/large>``: 셋 중 하나만 입력
 ## project/data 내의 prep.ipynb 혹은 prep_combined.ipynb
 ``prep.ipynb``와 ``prep_combined.ipynb``의 차이는 Train/Test 데이터셋의 전처리를 나눠서 진행하는지, 한번에 진행하는지의 차이입니다.
+## 터미널 명령어
+별로 추천하지 않는 방법입니다.
+(``project/data`` 폴더 내에서 실행)
+1. behaviors.tsv 전처리 (impression logs)
+```
+python preprocess/parse_behavior_combined.py --train-file MIND/<size>/train/behaviors.tsv --test-file MIND/<size>/test/behaviors.tsv --train-out preprocessed_data/<size>/train --test-out preprocessed_data/<size>/test --user2int preprocessed_data/<size>/train/user2int.tsv
+```
+2. news.tsv 전처리
+```
+python preprocess/parse_news_combined.py --train-file MIND/<size>/train/news.tsv --test-file MIND/<size>/test/news.tsv --train-out preprocessed_data/<size>/train --test-out preprocessed_data/<size>/test --word-embeddings word_embeddings/glove.840B.300d.txt
+```
 
 # 모델 학습
 ## 터미널 명령어
