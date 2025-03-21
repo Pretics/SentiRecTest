@@ -1,9 +1,9 @@
 # SentiRec 수정 버전
 ### Original Code: https://github.com/MeteSertkan/newsrec
-
-1. pytorch, torch_lightning, torchmetrics 등 학습 관련 라이브러리를 최신 버전으로 업그레이드 하고, 버전에 맞게 코드 일부를 수정했습니다.
-#. 윈도우에서 정상적으로 학습이 진행되도록 수정했습니다.
-2. 데이터 전처리를 담당하는 parse_behavior.py와 parse_news.py를 (개인적으로는)좀 더 가독성 있게 수정하고, prep.sh에 대응되는 powershell 스크립트 파일을 만들었습니다. 
+#### 변경 사항
+1. pytorch, torch_lightning, torchmetrics 등 학습 관련 라이브러리를 최신 버전으로 업그레이드 하고, 해당 버전에 맞게 코드 일부를 수정했습니다.
+2. 윈도우에서 정상적으로 학습이 진행되도록 수정했습니다. (Ubuntu 환경에서 테스트는 아직 못 해봤습니다.)
+3. 데이터 전처리를 담당하는 ``parse_behavior.py``와 ``parse_news.py``를 (개인적으로)좀 더 가독성 있게 수정하고, ``prep.sh에 대응되는`` ``prep_download.ps1``, ``prep_process.ps1``을 만들었습니다. 
 4. 데이터 전처리, 학습, 테스트를 단계별로 관찰하기 용이하도록 train.ipynb와 test.ipynb를 만들었습니다. (각각의 파일은 train.py, test.py와 완전히 동일한 작업을 수행합니다.)
 
 # 데이터 전처리
