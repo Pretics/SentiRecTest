@@ -42,11 +42,11 @@ powershell 스크립트, ``.ipynb`` 두 가지 방법 중 하나만 실행하면
 별로 추천하지 않는 방법입니다. <br/>
 ``<size>`` 부분을 사용할 데이터셋의 크기에 맞게 변경해야 하며, 데이터셋을 미리 다운 받아야 합니다. <br/>
 (``project/data`` 폴더 내에서 실행)
-1. Train/Test behaviors.tsv 전처리
+1. train/test behaviors.tsv 전처리
 ```
 python preprocess/parse_behavior_combined.py --train-file MIND/<size>/train/behaviors.tsv --test-file MIND/<size>/test/behaviors.tsv --train-out preprocessed_data/<size>/train --test-out preprocessed_data/<size>/test --user2int preprocessed_data/<size>/train/user2int.tsv
 ```
-2. Train/Test news.tsv 전처리
+2. train/test news.tsv 전처리
 ```
 python preprocess/parse_news_combined.py --train-file MIND/<size>/train/news.tsv --test-file MIND/<size>/test/news.tsv --train-out preprocessed_data/<size>/train --test-out preprocessed_data/<size>/test --word-embeddings word_embeddings/glove.840B.300d.txt
 ```
@@ -54,27 +54,19 @@ python preprocess/parse_news_combined.py --train-file MIND/<size>/train/news.tsv
 터미널 명령어 1과 동일한 결과물을 생성합니다. <br/>
 ``<size>`` 부분을 사용할 데이터셋의 크기에 맞게 변경해야 하며, 데이터셋을 미리 다운 받아야 합니다. <br/>
 (``project/data`` 폴더 내에서 실행)
-1. Train/Test behaviors.tsv 전처리
-```
-python preprocess/parse_behavior_combined.py --train-file MIND/<size>/train/behaviors.tsv --test-file MIND/<size>/test/behaviors.tsv --train-out preprocessed_data/<size>/train --test-out preprocessed_data/<size>/test --user2int preprocessed_data/<size>/train/user2int.tsv
-```
-2. Train/Test news.tsv 전처리
-```
-python preprocess/parse_news_combined.py --train-file MIND/<size>/train/news.tsv --test-file MIND/<size>/test/news.tsv --train-out preprocessed_data/<size>/train --test-out preprocessed_data/<size>/test --word-embeddings word_embeddings/glove.840B.300d.txt
-```
-3. Preprocess the impression logs of the mind-trainig data as follows: 
+1. train behaviors.tsv 전처리
 ```
 python parse_behavior.py --in-file MIND/<size>/train/behaviors.tsv --out-dir preprocessed_data/<size>/train --mode train
 ```
-4. Preprocess the impressions logs of the mind-test data as follows:
+2. test behaviors.tsv 전처리
 ```
 python parse_behavior.py --in-file MIND/<size>/test/behaviors.tsv --out-dir preprocessed_data/<size>/test --mode test --user2int preprocessed_data/<size>/train/user2int.tsv 
 ```
-5. Preprocess the news content of the mind-train data as follows:
+3. train news.tsv 전처리
 ```
 python parse_news.py --in-file MIND/<size>/train/news.tsv --out-dir preprocessed_data/<size>/train --mode train --word-embeddings word_embeddings/glove.840B.300d.txt
 ```
-6. Preprocess the news content of the mind-test data as follows: 
+4. test news.tsv 전처리
 ```
 python parse_news.py --in-file MIND/<size>/test/news.tsv --out-dir preprocessed_data/<size>/test --mode test --word-embeddings word_embeddings/glove.840B.300d.txt --embedding-weights preprocessed_data/<size>/train/embedding_weights.csv  --word2int preprocessed_data/<size>/train/word2int.tsv --category2int preprocessed_data/<size>/train/category2int.tsv  
 ```
