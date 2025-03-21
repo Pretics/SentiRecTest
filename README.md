@@ -97,8 +97,8 @@ tensorboard --logdir <path_to_tensorboard_logdir>
 ``<path_to_tensorboard_logdir>`` example: ``logs/lightning_logs/tensorboard/sentirec/vader_lambda0p4_mu10`` <br/>
 
 내부에 .0 파일이 여러개 존재할 경우 보고싶은 파일 하나를 골라 다른 폴더로 옮겨서 확인하는 것을 추천합니다.
-
-
+<br/>
+<br/>
 이하 원본 repository의 README 내용입니다.
 
 # NewsRec
