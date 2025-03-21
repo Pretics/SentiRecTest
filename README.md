@@ -27,17 +27,18 @@
 powershell 스크립트, ``.ipynb`` 두 가지 방법 중 하나만 실행하면 됩니다. 둘 다 동일하게 동작합니다.
 ## powershell 스크립트
 (``project/data`` 폴더 내에서 실행)
-#### 데이터셋 다운로드
+1. 데이터셋 다운로드
 ```
 .\prep_download.ps1 -size <demo/small/large>
 ```
-#### 데이터 전처리 진행
+2. 데이터 전처리 진행
 ```
 .\prep_process.ps1 -size <demo/small/large>
 ```
 ``<demo/small/large>``: 셋 중 하나만 입력
 ## project/data 내의 prep.ipynb 혹은 prep_combined.ipynb
-``prep.ipynb``와 ``prep_combined.ipynb``의 차이는 Train/Test 데이터셋의 전처리를 나눠서 진행하는지, 한번에 진행하는지의 차이입니다.
+둘 다 결과물은 동일합니다. <br/>
+``prep.ipynb``는 train과 test 데이터셋의 전처리를 따로따로 실행하며, ``prep_combined.ipynb``는 한 번에 진행합니다.
 ## 터미널 명령어 1
 별로 추천하지 않는 방법입니다. <br/>
 ``<size>`` 부분을 사용할 데이터셋의 크기에 맞게 변경해야 하며, 데이터셋을 미리 다운 받아야 합니다. <br/>
