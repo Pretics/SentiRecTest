@@ -1,5 +1,5 @@
 # SentiRec 수정 버전
-원본 리포지토리 https://github.com/MeteSertkan/newsrec
+Original Code: https://github.com/MeteSertkan/newsrec
 
 1. pytorch, torch_lightning, torchmetrics 등 학습 관련 라이브러리를 최신 버전으로 업그레이드 하고, 버전에 맞게 코드 일부를 수정했습니다.
 #. 윈도우에서 정상적으로 학습이 진행되도록 수정했습니다.
@@ -8,15 +8,15 @@
 
 # 데이터 전처리
 
-## 1. powershell 스크립트로 실행하기
+## powershell 스크립트
 (project/data 폴더 내에서 실행)
 #### 데이터셋 다운로드
-```.\prep_download.ps1 -size <demo/small/large>``` <br/>
+``.\prep_download.ps1 -size <demo/small/large>`` <br/>
 #### 데이터 전처리 진행
-```.\prep_process.ps1 -size <demo/small/large>```
+``.\prep_process.ps1 -size <demo/small/large>``
 
-## 2. project/data 내의 prep.ipynb 혹은 prep_combined.ipynb로 실행
-일반 ``prep.ipynb``와 ``prep_combined.ipynb``의 차이는 Train/Test 데이터셋의 전처리를 나눠서 진행하는지, 한번에 진행하는지의 차이입니다.
+## project/data 내의 prep.ipynb 혹은 prep_combined.ipynb
+``prep.ipynb``와 ``prep_combined.ipynb``의 차이는 Train/Test 데이터셋의 전처리를 나눠서 진행하는지, 한번에 진행하는지의 차이입니다.
 
 # Train, Test 실행법
 ``project 폴더 내에서 실행``
