@@ -8,23 +8,31 @@ Original Code: https://github.com/MeteSertkan/newsrec
 
 # 데이터 전처리
 
-## powershell 스크립트
-(project/data 폴더 내에서 실행)
+### powershell 스크립트
+(project/data 폴더 내에서 powershell 터미널로 실행)
 #### 데이터셋 다운로드
-``.\prep_download.ps1 -size <demo/small/large>`` <br/>
+```
+.\prep_download.ps1 -size <demo/small/large>
+```
 #### 데이터 전처리 진행
-``.\prep_process.ps1 -size <demo/small/large>``
+```
+.\prep_process.ps1 -size <demo/small/large>
+```
 
-## project/data 내의 prep.ipynb 혹은 prep_combined.ipynb
+### project/data 내의 prep.ipynb 혹은 prep_combined.ipynb
 ``prep.ipynb``와 ``prep_combined.ipynb``의 차이는 Train/Test 데이터셋의 전처리를 나눠서 진행하는지, 한번에 진행하는지의 차이입니다.
 
-# Train, Test 실행법
-``project 폴더 내에서 실행``
-1. SentiRec 
-- Train
-python train.py --config config/model/sentirec/vader_lambda0p4_mu10.yaml
-- Test
-python test.py --config config/model/sentirec/vader_lambda0p4_mu10.yaml --ckpt logs/lightning_logs/checkpoints/sentirec/vader_lambda0p4_mu10/<ckpt파일 위치>
+# Train, Test 시작
+### 터미널 명령어
+(project 폴더 내에서 실행)
+#### Train
+```
+python train.py --config <config파일 위치>
+```
+#### Test
+```
+python test.py --config <config파일 위치> --ckpt <ckpt파일 위치>
+```
 
 ex) epoch=20-val_auc_epoch=0.6618.ckpt
 
