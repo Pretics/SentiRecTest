@@ -1,5 +1,5 @@
 # SentiRec 수정 버전
-``Original Code: https://github.com/MeteSertkan/newsrec``
+### Original Code: https://github.com/MeteSertkan/newsrec
 
 1. pytorch, torch_lightning, torchmetrics 등 학습 관련 라이브러리를 최신 버전으로 업그레이드 하고, 버전에 맞게 코드 일부를 수정했습니다.
 #. 윈도우에서 정상적으로 학습이 진행되도록 수정했습니다.
