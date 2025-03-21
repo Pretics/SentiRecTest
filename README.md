@@ -19,6 +19,7 @@ powershell 스크립트, ``.ipynb`` 두 가지 방법 중 하나만 실행하면
 ```
 .\prep_process.ps1 -size <demo/small/large>
 ```
+``<demo/small/large>``: 셋 중 하나만 입력
 ## project/data 내의 prep.ipynb 혹은 prep_combined.ipynb
 ``prep.ipynb``와 ``prep_combined.ipynb``의 차이는 Train/Test 데이터셋의 전처리를 나눠서 진행하는지, 한번에 진행하는지의 차이입니다.
 
