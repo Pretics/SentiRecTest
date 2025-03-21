@@ -8,7 +8,7 @@ Original Code: https://github.com/MeteSertkan/newsrec
 
 # 데이터 전처리
 
-### powershell 스크립트
+## powershell 스크립트
 (project/data 폴더 내에서 powershell 터미널로 실행)
 #### 데이터셋 다운로드
 ```
@@ -19,7 +19,7 @@ Original Code: https://github.com/MeteSertkan/newsrec
 .\prep_process.ps1 -size <demo/small/large>
 ```
 
-### project/data 내의 prep.ipynb 혹은 prep_combined.ipynb
+## project/data 내의 prep.ipynb 혹은 prep_combined.ipynb
 ``prep.ipynb``와 ``prep_combined.ipynb``의 차이는 Train/Test 데이터셋의 전처리를 나눠서 진행하는지, 한번에 진행하는지의 차이입니다.
 
 # Train, Test 시작
