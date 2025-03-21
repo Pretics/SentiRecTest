@@ -178,7 +178,7 @@ def save_test_data(
         for weights in embedding_weights:
             file.write(weights)
 
-def prep_news(args, embeddings: dict):
+def prep_news_combined(args, embeddings: dict):
     """
     0. 데이터셋의 news.tsv를 불러옵니다.
     1. category2int, word2int, embedding_weights를 불러오거나 생성합니다.
@@ -190,6 +190,7 @@ def prep_news(args, embeddings: dict):
     word2int = {}
     embedding_weights = []
     
+    # Train 데이터셋 전처리
     with open(path.join(args.train_out_dir, 'parsed_news.tsv'), 'w', newline='') as train_news_file:
         news_writer = csv.writer(train_news_file, delimiter='\t')
         print("preparing/processing train news content")
@@ -200,6 +201,7 @@ def prep_news(args, embeddings: dict):
 
     save_train_data(args, category2int, word2int, embedding_weights)
 
+    # Test 데이터셋 전처리
     with open(path.join(args.test_out_dir, 'parsed_news.tsv'), 'w', newline='') as test_news_file:
         news_writer = csv.writer(test_news_file, delimiter='\t')
         print("preparing/processing test news content")
@@ -209,5 +211,3 @@ def prep_news(args, embeddings: dict):
         news_writer.writerows(processed_newsdata)
 
     save_test_data(args, word2int, embedding_weights)
-
-    
