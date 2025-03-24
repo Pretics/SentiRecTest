@@ -1,10 +1,7 @@
 import argparse
-import for_test
+from utils.test_manager import TestManager, TestArgs
 
 def get_args():
-    # ------------
-    # args -> config
-    # ------------
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--config',
@@ -19,9 +16,10 @@ def get_args():
         help='checkpoint to load',
         required=True)
     args = parser.parse_args()
-    args = for_test.TestArgs(**vars(args))
+    args = TestArgs(**vars(args))
     return args
 
 if __name__ == '__main__':
     args = get_args()
-    for_test.cli_main(args)
+    test_manager = TestManager(args)
+    test_manager.test()

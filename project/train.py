@@ -1,5 +1,5 @@
 import argparse
-from train_manager import TrainManager, TrainArgs
+from utils.train_manager import TrainManager, TrainArgs
 
 def get_args():
     parser = argparse.ArgumentParser()

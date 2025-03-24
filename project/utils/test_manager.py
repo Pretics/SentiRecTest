@@ -7,13 +7,11 @@ from dotmap import DotMap
 import numpy as np
 import yaml
 
-import torch
-from torch import Tensor
+from torch import Tensor, from_numpy
 from torch.utils.data import DataLoader
 
-import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning import Trainer
+from pytorch_lightning import Trainer, LightningModule, seed_everything
 
 from models.lstur import LSTUR
 from models.nrms import NRMS
@@ -59,7 +57,7 @@ class TestManager:
             config = DotMap(config)
 
         assert(config.name in ["lstur", "nrms", "naml", "naml_simple", "sentirec", "robust_sentirec"])
-        pl.seed_everything(1234)
+        seed_everything(1234)
         return config
 
     def create_logger(self, config: DotMap):
@@ -86,7 +84,7 @@ class TestManager:
             for line in tqdm(lines):
                 weights = [float(w) for w in line.split(" ")]
                 embedding_weights.append(weights)
-        pretrained_word_embedding = torch.from_numpy(
+        pretrained_word_embedding = from_numpy(
             np.array(embedding_weights, dtype=np.float32)
         )
         return pretrained_word_embedding
@@ -140,7 +138,7 @@ class TestManager:
     def start_test(
             self, 
             trainer: Trainer,
-            model: pl.LightningModule,
+            model: LightningModule,
             test_loader: DataLoader
         ) -> list[dict[str, float]]:
         test_result = trainer.test(
