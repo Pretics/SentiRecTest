@@ -3,6 +3,17 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import csv
 import random
+from dataclasses import dataclass
+
+@dataclass
+class PrepBehaviorArgs:
+    train_behavior_path: str
+    test_behavior_path: str
+    train_out_dir: str
+    test_out_dir: str
+    user2int_path: str
+    split_test_size: float
+    n_negative: int
 
 # helper to load map (e.g. user-index) as dict
 def load_idx_map_as_dict(file_path):

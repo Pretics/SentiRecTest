@@ -5,6 +5,17 @@ from nltk.tokenize import word_tokenize
 import csv
 from transformers import pipeline
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from dataclasses import dataclass
+
+@dataclass
+class PrepNewsArgs:
+    train_news_path: str
+    test_news_path: str
+    train_out_dir: str
+    test_out_dir: str
+    word_embedding_path: str
+    max_title: int
+    max_abstract: int
 
 # generate word2int + extract embedding weights
 def process_word_embeddings(word_embeddings_file):
@@ -158,9 +169,7 @@ def save_train_data(
     save_n2int(word2int, 'word2int.tsv', args.train_out_dir)
     with open(path.join(args.train_out_dir, 'embedding_weights.csv'), 'w', encoding='utf-8', newline='') as file:
         # 첫 줄에 index=0(빈칸) 패딩용 0 0 0 ... 0 가중치 추가
-        padding_weights = " ".join(["0"] * 300) + "\n"
-        file.write(padding_weights)
-
+        file.write(" ".join(["0.0"] * 300) + "\n")
         for weights in embedding_weights:
             file.write(weights)
 
@@ -172,9 +181,7 @@ def save_test_data(
     save_n2int(word2int, 'word2int.tsv', args.test_out_dir)
     with open(path.join(args.test_out_dir, 'embedding_weights.csv'), 'w', encoding='utf-8', newline='') as file:
         # 첫 줄에 index=0(빈칸) 패딩용 0 0 0 ... 0 가중치 추가
-        padding_weights = " ".join(["0"] * 300) + "\n"
-        file.write(padding_weights)
-
+        file.write(" ".join(["0.0"] * 300) + "\n")
         for weights in embedding_weights:
             file.write(weights)
 

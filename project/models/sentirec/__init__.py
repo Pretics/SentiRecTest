@@ -79,16 +79,18 @@ class SENTIREC(pl.LightningModule):
         })
         
 
+        
+    def forward(self, batch):
         """
+        # embedding_weights <-> word2int 관련 index out of bounds 테스트
         word_embedding = self.news_encoder.module.word_embedding
-
+        
         print(f"batch['c_title'].max(): {batch['c_title'].max()}, embedding weight size: {word_embedding.weight.shape[0]}")
-        assert batch["c_title"].max() < word_embedding.weight.shape[0], "ERROR: Index out of bounds!"
+        #assert batch["c_title"].max() < word_embedding.weight.shape[0], "ERROR: Index out of bounds!"
 
         print(f"batch['c_title'].min(): {batch['c_title'].min()}")
-        assert batch["c_title"].min() >= 0, "ERROR: Negative index found in batch['c_title']!"
+        #assert batch["c_title"].min() >= 0, "ERROR: Negative index found in batch['c_title']!"
         """
-    def forward(self, batch):
         # encode candidate news
         candidate_news_vector = self.news_encoder(batch["c_title"])
         # encode history 
