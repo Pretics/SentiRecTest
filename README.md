@@ -9,6 +9,7 @@
 6. 학습, 테스트를 단계별로 관찰하기 용이하도록 ``train.ipynb``와 ``test.ipynb``를 만들었습니다.
 7. Train/Test 데이터셋을 따로따로 처리하는 기존의 코드 대신, 두 데이터를 한 번에 처리하는 ``_combined.`` 버전 코드를 만들었습니다. (원본 코드와 생성되는 결과물은 동일합니다.)
 8. MIND 데이터셋의 demo/small/large 버전을 쉽게 변경하며 테스트하기 위해 폴더 구조를 획일화(원본 데이터셋: ``data/MIND/<size>/...``, 전처리 데이터: ``data/preprocess_data/<size>/...``)하고, 각종 명령어와 config 파일, 코드 일부를 변경 사항에 맞게 수정했습니다.
+9. 데이터셋의 사이즈를 다양하게 구성해볼 수 있는 generate_manual_dataset.ipynb를 추가했습니다.
 
 # 환경 설정
 ## Conda
@@ -29,11 +30,11 @@ powershell 스크립트, ``.ipynb``, 터미널 명령어 세 가지 가지 방�
 (``project/data`` 폴더 내에서 실행)
 1. 데이터셋 다운로드
 ```
-.\prep_download.ps1 -size <size>
+./preprocess/prep_download.ps1 -size <size>
 ```
 2. 데이터 전처리 진행
 ```
-.\prep_process.ps1 -size <size>
+./preprocess/prep_process.ps1 -size <size>
 ```
 ``<size>``: demo, small, large 셋 중 하나 입력
 ## project/data 내의 prep.ipynb 혹은 prep_combined.ipynb
@@ -97,8 +98,7 @@ tensorboard --logdir <path_to_tensorboard_logdir>
 ``<path_to_tensorboard_logdir>`` example: ``logs/lightning_logs/tensorboard/sentirec/vader_lambda0p4_mu10`` <br/>
 
 내부에 .0 파일이 여러개 존재할 경우 보고싶은 파일 하나를 골라 다른 폴더로 옮겨서 확인하는 것을 추천합니다.
-<br/>
-<br/>
+
 이하 원본 repository의 README 내용입니다.
 
 # NewsRec
