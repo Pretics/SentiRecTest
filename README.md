@@ -10,6 +10,7 @@
 7. Train/Test 데이터셋을 따로따로 처리하는 기존의 코드 대신, 두 데이터를 한 번에 처리하는 ``_combined.`` 버전 코드를 만들었습니다. (원본 코드와 생성되는 결과물은 동일합니다.)
 8. MIND 데이터셋의 demo/small/large 버전을 쉽게 변경하며 테스트하기 위해 폴더 구조를 획일화(원본 데이터셋: ``data/MIND/<size>/...``, 전처리 데이터: ``data/preprocess_data/<size>/...``)하고, 각종 명령어와 config 파일, 코드 일부를 변경 사항에 맞게 수정했습니다.
 9. 데이터셋의 사이즈를 다양하게 구성해볼 수 있는 generate_manual_dataset.ipynb를 추가했습니다.
+10. train.py와 test.py의 기능 대부분을 train_manager.py, test_manager.py로 이전, 클래스의 형태로 사용하기 쉽게 변경하였습니다.
 
 # 환경 설정
 ## Conda
