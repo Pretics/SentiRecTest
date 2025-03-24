@@ -35,20 +35,33 @@ class TrainArgs():
 class TrainManager:
     def __init__(self, args:Union[TrainArgs, None]):
         if args is not None:
-            # configs
-            self.config = self.load_model_config(args)
-            self.args = args
-            
-            # load data
-            self.train_dataset, self.train_loader = self.create_train_dataloader(self.config)
-            self.val_dataset, self.val_loader = self.create_val_dataloader(self.config)
-            self.pretrained_word_embedding = self.load_embedding_weights(self.config)
+            self.update_by_args(args)
+        else:
+            self.config = None
+            self.args = None
+            self.train_dataset = None
+            self.train_loader = None
+            self.val_dataset = None
+            self.val_loader = None
+            self.pretrained_word_embedding = None
+            self.model = None
+            self.trainer = None
 
-            # init model
-            self.model = self.create_model(self.config, self.pretrained_word_embedding)
+    def update_by_args(self, args):
+        # configs
+        self.config = self.load_model_config(args)
+        self.args = args
+        
+        # load data
+        self.train_dataset, self.train_loader = self.create_train_dataloader(self.config)
+        self.val_dataset, self.val_loader = self.create_val_dataloader(self.config)
+        self.pretrained_word_embedding = self.load_embedding_weights(self.config)
 
-            # init trainer
-            self.trainer = self.create_train_trainer(self.config)
+        # init model
+        self.model = self.create_model(self.config, self.pretrained_word_embedding)
+
+        # init trainer
+        self.trainer = self.create_train_trainer(self.config)
 
     def load_model_config(self, args: TrainArgs):
         with open(args.config, 'r') as ymlfile:
@@ -56,7 +69,7 @@ class TrainManager:
             config = DotMap(config)
 
         assert(config.name in ["lstur", "nrms", "naml", "naml_simple", "sentirec", "robust_sentirec"])
-        seed_everything(1234)
+        seed_everything(config.seed)
         return config
 
     def create_checkpoint_callback(self, config: DotMap):

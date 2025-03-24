@@ -9,6 +9,7 @@ name: sentirec
 # dataset size
 dataset_size: "manual"
 preprocess_data_dir: "data/preprocessed_data/manual"
+seed: 1234
 # behavior
 train_behavior: "train/train_behavior.tsv"
 val_behavior: "train/val_behavior.tsv"

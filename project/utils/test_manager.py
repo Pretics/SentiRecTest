@@ -26,7 +26,7 @@ from data.dataset import BaseDataset
 class TestArgs():
     """
     ``config``: config파일 경로 <br/>
-    ``ckpt``: ckpt파일 경로
+    ``ckpt``: 테스트를 진행할 모델의 ckpt파일 경로
     """
     config: str
     ckpt: str
@@ -34,45 +34,59 @@ class TestArgs():
 class TestManager:
     def __init__(self, args: Union[TestArgs, None]):
         if args is not None:
-            # configs
-            self.config = self.load_model_config(args)
-            self.args = args
+            self.update_by_args(args)
+        else:
+            self.args = None
+            self.config = None
+            self.test_dataset = None
+            self.test_loader = None
+            self.pretrained_word_embedding = None
+            self.model = None
+            self.trainer = None
 
-            # logging
-            self.logger = self.create_logger(self.config)
+    def update_by_args(self, args: TestArgs):
+        # configs
+        self.args = args
+        self.config = self.load_model_config(args)
 
-            # load data
-            self.test_dataset, self.test_loader = self.create_dataloader(self.config)
-            self.pretrained_word_embedding = self.load_embedding_weights(self.config)
-        
-            # init model
-            self.model = self.load_model_from_checkpoint(args, self.config, self.pretrained_word_embedding)
+        # logging
+        self.logger = self.create_logger(self.config)
 
-            # init trainer
-            self.trainer = self.create_trainer(self.config, self.logger)
+        # load data
+        self.test_dataset, self.test_loader = self.create_dataloader(self.config)
+        self.pretrained_word_embedding = self.load_embedding_weights(self.config)
+    
+        # init model
+        self.model = self.load_model_from_checkpoint(args, self.config, self.pretrained_word_embedding)
+
+        # init trainer
+        self.trainer = self.create_trainer(self.config, self.logger)
 
     def load_model_config(self, args: TestArgs):
         with open(args.config, 'r') as ymlfile:
             config = yaml.load(ymlfile, Loader=yaml.FullLoader)
             config = DotMap(config)
-
         assert(config.name in ["lstur", "nrms", "naml", "naml_simple", "sentirec", "robust_sentirec"])
-        seed_everything(1234)
+        seed_everything(config.seed)
         return config
 
     def create_logger(self, config: DotMap):
         logger = TensorBoardLogger(**config.logger)
         return logger
+    
+    def create_dataloader(self, config, behavior_path, news_path, config_loader):
+        dataset = BaseDataset(behavior_path, news_path, config)
+        loader = DataLoader(
+            dataset,
+            **config_loader)
+        return dataset, loader
 
-    def create_dataloader(self, config: DotMap):
-        test_dataset = BaseDataset(
+    def create_test_dataloader(self, config: DotMap):
+        test_dataset, test_loader = self.create_dataloader(
+            config,
             path.join(config.preprocess_data_dir, config.test_behavior),
-            path.join(config.preprocess_data_dir, config.test_news), 
-            config
-        )
-        test_loader = DataLoader(
-            test_dataset,
-            **config.test_dataloader
+            path.join(config.preprocess_data_dir, config.test_news),
+            config.test_dataloader
         )
         return test_dataset, test_loader
 
