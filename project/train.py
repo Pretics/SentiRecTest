@@ -1,5 +1,5 @@
 import argparse
-import for_train
+from train_manager import TrainManager, TrainArgs
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -16,9 +16,10 @@ def get_args():
         help='resume training from ckpt',
         required=False)
     args = parser.parse_args()
-    args = for_train.TrainArgs(**vars(args))
+    args = TrainArgs(**vars(args))
     return args
 
 if __name__ == '__main__':
     args = get_args()
-    for_train.cli_main(args)
+    train_manager = TrainManager(args)
+    train_manager.fit()
