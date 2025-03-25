@@ -19,23 +19,58 @@ class TestMetricsViewer:
         ...
     }
     """
+    size: Union[tuple[int, int], None]
+    title: str
+    xlabel: str
+    ylabel: str
+    legend: str
+    grid: bool
 
 
     def __init__(self, test_results: Union[dict[dict[str, float]], None]):
         if test_results is not None:
             self.test_results = test_results
+            self.set_config()
 
-    def show(
+    def set_config(
+        self,
+        size: Union[tuple[int, int], None] = (10, 6),
+        title: str = "Evaluation Metrics Comparison",
+        xlabel: str = "Metric Name",
+        ylabel: str = "Metric Score",
+        legend: str = "Experiments",
+        grid: bool = True
+    ):
+        self.size = size,
+        self.title = title,
+        self.xlabel = xlabel,
+        self.ylabel = ylabel,
+        self.legend = legend,
+        self.grid = grid
+
+    def show(self):
+        self.plt_show(
+            size=self.size,
+            title=self.title,
+            xlabel=self.xlabel,
+            ylabel=self.ylabel,
+            legend=self.legend,
+            grid=self.grid
+        )
+
+    def plt_show(
         self,
         size: Union[tuple[int, int], None],
-
+        title: str,
+        xlabel: str,
+        ylabel: str,
+        legend: str,
+        grid: bool
     ):
         # 1. 실험 결과를 DataFrame으로 변환
         test_results_df = pd.DataFrame(self.test_results)
-        
-        # 2. 그래프용 데이터 등록
-        plt.figure(figsize=size)
 
+        # 2. 데이터 등록
         for exp_name in test_results_df.columns:
             plt.plot(
                 test_results_df.index,
@@ -45,12 +80,13 @@ class TestMetricsViewer:
             )
 
         # 3. 스타일링
+        plt.figure(figsize=size)
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.legend(title=legend)
+        plt.grid(grid)
         plt.xticks(rotation=90)
-        plt.ylabel("Metric Score")
-        plt.xlabel("Metric Name")
-        plt.title("Evaluation Metrics Comparison")
-        plt.legend(title="Experiments")
-        plt.grid(True)
         plt.tight_layout()
 
         # 4. 출력
