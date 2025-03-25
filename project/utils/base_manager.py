@@ -1,5 +1,5 @@
 from os import path
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Union
 
 import yaml
@@ -20,7 +20,7 @@ from models.sentirec import SENTIREC
 from models.robust_sentirec import ROBUST_SENTIREC
 
 from data.dataset import BaseDataset
-from utils.configs import BaseConfig
+from utils.configs import BaseConfig, load_config_from_yaml
 
 @dataclass
 class ManagerArgs:
@@ -42,9 +42,9 @@ class BaseManager:
     # for load data
     # ===============
     def load_model_config(self, args: ManagerArgs):
-        with open(args.config_path, 'r') as ymlfile:
-            config = yaml.load(ymlfile, Loader=yaml.FullLoader)
-            config = BaseConfig(**config)
+        #with open(args.config_path, 'r') as ymlfile:
+        #    config = yaml.load(ymlfile, Loader=yaml.FullLoader)
+        config: BaseConfig = load_config_from_yaml(args.config_path, BaseConfig)
         assert(config.name in ["lstur", "nrms", "naml", "naml_simple", "sentirec", "robust_sentirec"])
         seed_everything(config.seed)
         return config
@@ -66,7 +66,7 @@ class BaseManager:
         dataset = BaseDataset(behavior_path, news_path, config)
         loader = DataLoader(
             dataset,
-            **config_loader)
+            **asdict(config_loader))
         return dataset, loader
 
     def create_train_dataloader(self, config: BaseConfig):
@@ -158,15 +158,15 @@ class BaseManager:
     # =============
     def create_callbacks(self, config: BaseConfig):
         checkpoint_callback = ModelCheckpoint(
-            **config.checkpoint
+            **asdict(config.checkpoint)
         )
         early_stop_callback = EarlyStopping(
-            **config.early_stop
+            **asdict(config.early_stop)
         )
         return checkpoint_callback, early_stop_callback
 
     def create_logger(self, config: BaseConfig):
-        logger = TensorBoardLogger(**config.logger)
+        logger = TensorBoardLogger(**asdict(config.logger))
         return logger
 
     def create_trainer(
@@ -176,7 +176,7 @@ class BaseManager:
             logger: TensorBoardLogger
         ):
         trainer = Trainer(
-            **config.trainer,
+            **asdict(config.trainer),
             callbacks=callbacks,
             logger=logger
         )

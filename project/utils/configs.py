@@ -1,5 +1,41 @@
-from dataclasses import dataclass
-from typing import Literal, Optional
+from dataclasses import dataclass, is_dataclass, fields
+from typing import Any, Literal, Optional, Type, Union, get_origin, get_args
+import yaml
+
+def from_dict(cls: Type, data: dict) -> Any:
+    """
+    재귀적으로 dict를 dataclass로 변환
+    """
+    if not is_dataclass(cls):
+        return data
+
+    kwargs = {}
+    for field in fields(cls):
+        field_value = data.get(field.name)
+        field_type = field.type
+
+        origin = get_origin(field_type)
+        args = get_args(field_type)
+
+        # Optional[T] 처리
+        if origin is Union and type(None) in args:
+            actual_type = [arg for arg in args if arg is not type(None)][0]
+            if is_dataclass(actual_type) and isinstance(field_value, dict):
+                kwargs[field.name] = from_dict(actual_type, field_value)
+            else:
+                kwargs[field.name] = field_value
+        elif is_dataclass(field_type) and isinstance(field_value, dict):
+            kwargs[field.name] = from_dict(field_type, field_value)
+        else:
+            kwargs[field.name] = field_value
+
+    return cls(**kwargs)
+
+
+def load_config_from_yaml(path: str, cls: Type) -> Any:
+    with open(path, "r") as f:
+        config_dict = yaml.safe_load(f)
+    return from_dict(cls, config_dict)
 
 @dataclass
 class CheckpointConfig:
