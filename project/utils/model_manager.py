@@ -22,20 +22,23 @@ from models.sentirec import SENTIREC
 from models.robust_sentirec import ROBUST_SENTIREC
 
 from data.dataset import BaseDataset
+from base_manager import BaseManager
 
 @dataclass
-class ModelArgs():
+class ModelArgs(BaseManager):
     """
     ``config``: config파일 경로 <br/>
-    ``resume``: 학습을 재개할 ckpt파일 경로 <br/>
-    ``ckpt``: 테스트를 진행할 모델의 ckpt파일 경로
+    ``resume_ckpt_path``: 학습을 이어서 할 ckpt파일 경로 <br/>
+    ``test_ckpt_path``: 테스트를 진행할 모델의 ckpt파일 경로
     """
     config: str                 # all, require
-    resume: Union[str, None]    # for train
-    ckpt: Union[str, None]      # for test
+    resume_ckpt_path: Union[str, None] = None    # for train
+    test_ckpt_path: Union[str, None] = None      # for test
 
 class ModelManager:
-    args: ModelArgs
+    current_args: ModelArgs
+    args_list: list[ModelArgs]
+    is_multiple_args: bool
     config: DotMap
     train_dataset: BaseDataset
     train_loader: DataLoader
@@ -45,20 +48,26 @@ class ModelManager:
     test_loader: DataLoader
     pretrained_word_embedding: Tensor
     model: LightningModule
+    checkpoint_callback: ModelCheckpoint
     trainer: Trainer
 
-    def __init__(self, args:Union[ModelArgs, None], mode: str):
-        if args is not None:
+    def __init__(self, args:Union[list[ModelArgs], ModelArgs, None], mode: str):
+        if args is None:
+            return
+        elif isinstance(args, ModelArgs):
             self.update_by_args(args, mode)
+        elif type(args) == list:
+            self.args_list = args
+            self.update_by_args(args[0], mode)
 
-    def update_all(self):
-        self.update_by_args(self.args, self.mode)
+    def update(self):
+        self.update_by_args(self.current_args, self.mode)
 
     def update_by_args(self, args: ModelArgs, mode: str):
         # configs
         assert(mode in ["train", "test"])
         self.mode = mode
-        self.args = args
+        self.current_args = args
         self.config = self.load_model_config(args)
         # load common data
         self.pretrained_word_embedding = self.load_embedding_weights(self.config)
@@ -68,24 +77,27 @@ class ModelManager:
             self.train_dataset, self.train_loader = self.create_train_dataloader(self.config)
             self.val_dataset, self.val_loader = self.create_val_dataloader(self.config)
             # init model, trainer
-            self.model = self.create_model(self.config, self.pretrained_word_embedding)
+            if args.resume_ckpt_path is None:
+                self.model = self.create_model(self.config, self.pretrained_word_embedding)
+            else:
+                self.model = self.load_model_from_checkpoint(args.resume_ckpt_path, self.config, self.pretrained_word_embedding)
             self.trainer = self.create_train_trainer(self.config)
         elif self.mode == "test":
             # load data
             self.test_dataset, self.test_loader = self.create_test_dataloader(self.config)
             # init model, trainer
-            self.model = self.load_model_from_checkpoint(args, self.config, self.pretrained_word_embedding)
+            self.model = self.load_model_from_checkpoint(args.test_ckpt_path, self.config, self.pretrained_word_embedding)
             self.trainer = self.create_test_trainer(self.config)
 
     def change_to_train(self, resume: str):
-        self.args.resume = resume
+        self.current_args.resume_ckpt_path = resume
         self.mode = "train"
-        self.update_all()
+        self.update()
 
     def change_to_test(self, ckpt_filename):
-        self.args.ckpt = path.join(self.config.checkpoint.dirpath, ckpt_filename)
+        self.current_args.test_ckpt_path = path.join(self.config.checkpoint.dirpath, ckpt_filename)
         self.mode = "test"
-        self.update_all()
+        self.update()
 
     def load_model_config(self, args: ModelArgs):
         with open(args.config, 'r') as ymlfile:
@@ -102,6 +114,7 @@ class ModelManager:
         early_stop_callback = EarlyStopping(
             **config.early_stop
         )
+        self.checkpoint_callback = checkpoint_callback
         return [checkpoint_callback, early_stop_callback]
 
     def create_logger(self, config: DotMap):
@@ -172,40 +185,40 @@ class ModelManager:
         return model
     
     # from test_manager
-    def load_model_from_checkpoint(self, args: ModelArgs, config: DotMap, pretrained_word_embedding: Tensor):
+    def load_model_from_checkpoint(self, checkpoint_path: str, config: DotMap, pretrained_word_embedding: Tensor):
         if config.name == "lstur":
             model = LSTUR.load_from_checkpoint(
-                args.ckpt, 
+                checkpoint_path, 
                 config=config, 
                 pretrained_word_embedding=pretrained_word_embedding
             )
         elif config.name == "nrms":
             model = NRMS.load_from_checkpoint(
-                args.ckpt, 
+                checkpoint_path, 
                 config=config, 
                 pretrained_word_embedding=pretrained_word_embedding
             )
         elif config.name == "naml":
             model = NAML.load_from_checkpoint(
-                args.ckpt, 
+                checkpoint_path, 
                 config=config, 
                 pretrained_word_embedding=pretrained_word_embedding
             )
         elif config.name == "naml_simple":
             model = NAML_Simple.load_from_checkpoint(
-                args.ckpt, 
+                checkpoint_path, 
                 config=config, 
                 pretrained_word_embedding=pretrained_word_embedding
             )
         elif config.name == "sentirec":
             model = SENTIREC.load_from_checkpoint(
-                args.ckpt, 
+                checkpoint_path, 
                 config=config, 
                 pretrained_word_embedding=pretrained_word_embedding
             )
         elif config.name == "robust_sentirec":
             model = ROBUST_SENTIREC.load_from_checkpoint(
-                args.ckpt, 
+                checkpoint_path, 
                 config=config, 
                 pretrained_word_embedding=pretrained_word_embedding
             )
@@ -259,7 +272,7 @@ class ModelManager:
             model=model, 
             train_dataloaders=train_loader, 
             val_dataloaders=val_loader,
-            ckpt_path=args.resume
+            ckpt_path=args.resume_ckpt_path
         )
     
     def start_test(
@@ -279,8 +292,16 @@ class ModelManager:
             model=self.model, 
             train_dataloaders=self.train_loader, 
             val_dataloaders=self.val_loader,
-            ckpt_path=self.args.resume
+            ckpt_path=self.current_args.resume_ckpt_path
         )
+
+    def fit_all(self):
+        if self.is_multiple_args == False:
+            print("args.config를 1개만 입력했을 경우 .fit() 함수를 사용해주세요.")
+            return
+        
+        for args in self.args_list:
+            self.update_by_args()
 
     def test(self):
         self.test_result = self.start_test(self.trainer, self.model, self.test_loader)
