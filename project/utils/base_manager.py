@@ -1,3 +1,236 @@
+from os import path
+from dataclasses import dataclass
+from typing import Union
+
+import yaml
+from tqdm import tqdm
+import numpy as np
+
+from torch import Tensor, from_numpy
+from torch.utils.data import DataLoader
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning import Trainer, LightningModule, Callback, seed_everything
+
+from models.lstur import LSTUR
+from models.nrms import NRMS
+from models.naml import NAML
+from models.naml_simple import NAML_Simple
+from models.sentirec import SENTIREC
+from models.robust_sentirec import ROBUST_SENTIREC
+
+from data.dataset import BaseDataset
+from utils.configs import BaseConfig
+
+@dataclass
+class ManagerArgs:
+    """
+    ``config``: config파일 경로 <br/>
+    ``resume_ckpt_path``: 학습을 이어서 할 ckpt파일 경로 <br/>
+    ``test_ckpt_path``: 테스트를 진행할 모델의 ckpt파일 경로
+    """
+    config_path: str                 # all, require
+    resume_ckpt_path: Union[str, None] = None    # for train
+    test_ckpt_path: Union[str, None] = None      # for test
+
 class BaseManager:
-    def __init__(self):
-        pass
+    """
+    가독성을 위해 ModelManager의 내부적인 동작 코드는 모두 이곳에 몰아 넣고,
+    ModelManager에는 편리한 사용을 위한 인터페이스만 남겨놓기로 했습니다.
+    """
+    # ===============
+    # for load data
+    # ===============
+    def load_model_config(self, args: ManagerArgs):
+        with open(args.config_path, 'r') as ymlfile:
+            config = yaml.load(ymlfile, Loader=yaml.FullLoader)
+            config = BaseConfig(**config)
+        assert(config.name in ["lstur", "nrms", "naml", "naml_simple", "sentirec", "robust_sentirec"])
+        seed_everything(config.seed)
+        return config
+    
+    def load_embedding_weights(self, config: BaseConfig):
+        # load embedding pre-trained embedding weights
+        embedding_weights=[]
+        with open(path.join(config.preprocess_data_dir, config.embedding_weights), 'r') as file: 
+            lines = file.readlines()
+            for line in tqdm(lines):
+                weights = [float(w) for w in line.split(" ")]
+                embedding_weights.append(weights)
+        pretrained_word_embedding = from_numpy(
+            np.array(embedding_weights, dtype=np.float32)
+        )
+        return pretrained_word_embedding
+    
+    def create_dataloader(self, config: BaseConfig, behavior_path, news_path, config_loader):
+        dataset = BaseDataset(behavior_path, news_path, config)
+        loader = DataLoader(
+            dataset,
+            **config_loader)
+        return dataset, loader
+
+    def create_train_dataloader(self, config: BaseConfig):
+        train_dataset, train_loader = self.create_dataloader(
+            config,
+            path.join(config.preprocess_data_dir, config.train_behavior),
+            path.join(config.preprocess_data_dir, config.train_news),
+            config.train_dataloader
+        )
+        return train_dataset, train_loader
+
+    def create_val_dataloader(self, config: BaseConfig):
+        val_dataset, val_loader = self.create_dataloader(
+            config,
+            path.join(config.preprocess_data_dir, config.val_behavior),
+            path.join(config.preprocess_data_dir, config.train_news),
+            config.val_dataloader
+        )
+        return val_dataset, val_loader
+    
+    def create_test_dataloader(self, config: BaseConfig):
+        test_dataset, test_loader = self.create_dataloader(
+            config,
+            path.join(config.preprocess_data_dir, config.test_behavior),
+            path.join(config.preprocess_data_dir, config.test_news),
+            config.test_dataloader
+        )
+        return test_dataset, test_loader
+
+    # ===============
+    # for init model
+    # ===============
+    def create_model(self, config: BaseConfig, pretrained_word_embedding: Tensor):
+        if config.name == "lstur":
+            model = LSTUR(config, pretrained_word_embedding)
+        elif config.name == "nrms":
+            model = NRMS(config, pretrained_word_embedding)
+        elif config.name == "naml":
+            model = NAML(config, pretrained_word_embedding)
+        elif config.name == "naml_simple":
+            model = NAML_Simple(config, pretrained_word_embedding)
+        elif config.name == "sentirec":
+            model = SENTIREC(config, pretrained_word_embedding)
+        elif config.name == "robust_sentirec":
+            model = ROBUST_SENTIREC(config, pretrained_word_embedding)
+        return model
+    
+    def load_model_from_checkpoint(self, checkpoint_path: str, config: BaseConfig, pretrained_word_embedding: Tensor):
+        if config.name == "lstur":
+            model = LSTUR.load_from_checkpoint(
+                checkpoint_path, 
+                config=config, 
+                pretrained_word_embedding=pretrained_word_embedding
+            )
+        elif config.name == "nrms":
+            model = NRMS.load_from_checkpoint(
+                checkpoint_path, 
+                config=config, 
+                pretrained_word_embedding=pretrained_word_embedding
+            )
+        elif config.name == "naml":
+            model = NAML.load_from_checkpoint(
+                checkpoint_path, 
+                config=config, 
+                pretrained_word_embedding=pretrained_word_embedding
+            )
+        elif config.name == "naml_simple":
+            model = NAML_Simple.load_from_checkpoint(
+                checkpoint_path, 
+                config=config, 
+                pretrained_word_embedding=pretrained_word_embedding
+            )
+        elif config.name == "sentirec":
+            model = SENTIREC.load_from_checkpoint(
+                checkpoint_path, 
+                config=config, 
+                pretrained_word_embedding=pretrained_word_embedding
+            )
+        elif config.name == "robust_sentirec":
+            model = ROBUST_SENTIREC.load_from_checkpoint(
+                checkpoint_path, 
+                config=config, 
+                pretrained_word_embedding=pretrained_word_embedding
+            )
+        return model
+
+    # =============
+    # for Trainer
+    # =============
+    def create_callbacks(self, config: BaseConfig):
+        checkpoint_callback = ModelCheckpoint(
+            **config.checkpoint
+        )
+        early_stop_callback = EarlyStopping(
+            **config.early_stop
+        )
+        return checkpoint_callback, early_stop_callback
+
+    def create_logger(self, config: BaseConfig):
+        logger = TensorBoardLogger(**config.logger)
+        return logger
+
+    def create_trainer(
+            self, 
+            config: BaseConfig,
+            callbacks: Union[list[Callback], Callback, None],
+            logger: TensorBoardLogger
+        ):
+        trainer = Trainer(
+            **config.trainer,
+            callbacks=callbacks,
+            logger=logger
+        )
+        return trainer
+
+    def create_train_trainer(self, config: BaseConfig):
+        # init callbacks & logging
+        checkpoint_callback, early_stop_callback = self.create_callbacks(config)
+        logger = self.create_logger(config)
+        # init trainer
+        trainer = self.create_trainer(
+            config=config,
+            callbacks=[checkpoint_callback, early_stop_callback],
+            logger=logger
+        )
+        return trainer, checkpoint_callback
+    
+    def create_test_trainer(self, config: BaseConfig):
+        # init logging
+        logger = self.create_logger(config)
+        # init trainer
+        trainer = self.create_trainer(
+            config=config,
+            callbacks=None,
+            logger=logger
+        )
+        return trainer
+
+    # ==================
+    # for Training/Test
+    # ==================
+    def start_train(
+            self, 
+            args: ManagerArgs,
+            model: LightningModule,
+            trainer: Trainer,
+            train_loader: DataLoader,
+            val_loader: DataLoader
+        ):
+        trainer.fit(
+            model=model, 
+            train_dataloaders=train_loader, 
+            val_dataloaders=val_loader,
+            ckpt_path=args.resume_ckpt_path
+        )
+    
+    def start_test(
+            self, 
+            trainer: Trainer,
+            model: LightningModule,
+            test_loader: DataLoader
+        ) -> list[dict[str, float]]:
+        test_result = trainer.test(
+            model=model, 
+            dataloaders=test_loader
+        )
+        return test_result
