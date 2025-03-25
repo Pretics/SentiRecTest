@@ -3,15 +3,16 @@ import pandas as pd
 from typing import Union
 
 class TestMetricsViewer:
-    test_results: dict[dict[str, float]]
+    """
+    Show test results by line graphs
+    """
     """
     test_results = {
         experiment1: {
             metrics1: score1,
             metrics2: score2,
             ...
-        },
-        experiment2: {
+        }, experiment2: {
             metrics1: score1,
             metrics2: score2,
             ...
@@ -19,6 +20,7 @@ class TestMetricsViewer:
         ...
     }
     """
+    test_results: dict[dict[str, float]]
     size: Union[tuple[int, int], None]
     title: str
     xlabel: str
@@ -32,6 +34,10 @@ class TestMetricsViewer:
             self.test_results = test_results
             self.set_config()
 
+    def get_result_df(self):
+        df = pd.DataFrame(self.test_results)
+        return df
+
     def set_config(
         self,
         size: Union[tuple[int, int], None] = (10, 6),
@@ -41,15 +47,16 @@ class TestMetricsViewer:
         legend: str = "Experiments",
         grid: bool = True
     ):
-        self.size = size,
-        self.title = title,
-        self.xlabel = xlabel,
-        self.ylabel = ylabel,
-        self.legend = legend,
+        self.size = size
+        self.title = title
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+        self.legend = legend
         self.grid = grid
 
     def show(self):
         self.plt_show(
+            results=self.test_results,
             size=self.size,
             title=self.title,
             xlabel=self.xlabel,
@@ -60,6 +67,7 @@ class TestMetricsViewer:
 
     def plt_show(
         self,
+        results: dict[dict[str, float]],
         size: Union[tuple[int, int], None],
         title: str,
         xlabel: str,
@@ -68,9 +76,12 @@ class TestMetricsViewer:
         grid: bool
     ):
         # 1. 실험 결과를 DataFrame으로 변환
-        test_results_df = pd.DataFrame(self.test_results)
+        test_results_df = pd.DataFrame(results)
 
-        # 2. 데이터 등록
+        # 2. 빈 그래프 생성
+        plt.figure(figsize=size)
+
+        # 3. 데이터 등록
         for exp_name in test_results_df.columns:
             plt.plot(
                 test_results_df.index,
@@ -79,15 +90,14 @@ class TestMetricsViewer:
                 label=f"{exp_name}"
             )
 
-        # 3. 스타일링
-        plt.figure(figsize=size)
+        # 4. 스타일링
+        plt.xticks(rotation=90)
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.legend(title=legend)
         plt.grid(grid)
-        plt.xticks(rotation=90)
-        plt.tight_layout()
+        #plt.tight_layout()
 
         # 4. 출력
         plt.show()
