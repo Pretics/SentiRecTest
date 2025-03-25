@@ -4,7 +4,7 @@ import yaml
 
 def from_dict(cls: Type, data: dict) -> Any:
     """
-    재귀적으로 dict를 dataclass로 변환
+    재귀적으로 dict를 dataclass로 변환 (dataclass 안의 dataclass도 dict가 아니라 dataclass로 취급하기 위함)
     """
     if not is_dataclass(cls):
         return data

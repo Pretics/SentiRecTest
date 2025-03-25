@@ -2,7 +2,6 @@ from os import path
 from dataclasses import dataclass, asdict
 from typing import Union
 
-import yaml
 from tqdm import tqdm
 import numpy as np
 
@@ -22,6 +21,7 @@ from models.robust_sentirec import ROBUST_SENTIREC
 from data.dataset import BaseDataset
 from utils.configs import BaseConfig, load_config_from_yaml
 
+
 @dataclass
 class ManagerArgs:
     """
@@ -33,15 +33,16 @@ class ManagerArgs:
     resume_ckpt_path: Union[str, None] = None    # for train
     test_ckpt_path: Union[str, None] = None      # for test
 
+
 class BaseManager:
     """
-    가독성을 위해 ModelManager의 내부적인 동작 코드는 모두 이곳에 몰아 넣고,
-    ModelManager에는 편리한 사용을 위한 인터페이스만 남겨놓기로 했습니다.
+    가독성을 위해 ModelManager의 내부적인 동작 코드는 모두 이곳에 몰아 넣었습니다.
     """
     # ===============
     # for load data
     # ===============
-    def load_model_config(self, args: ManagerArgs):
+    @staticmethod
+    def load_model_config(args: ManagerArgs):
         #with open(args.config_path, 'r') as ymlfile:
         #    config = yaml.load(ymlfile, Loader=yaml.FullLoader)
         config: BaseConfig = load_config_from_yaml(args.config_path, BaseConfig)
@@ -49,7 +50,8 @@ class BaseManager:
         seed_everything(config.seed)
         return config
     
-    def load_embedding_weights(self, config: BaseConfig):
+    @staticmethod
+    def load_embedding_weights(config: BaseConfig):
         # load embedding pre-trained embedding weights
         embedding_weights=[]
         with open(path.join(config.preprocess_data_dir, config.embedding_weights), 'r') as file: 
@@ -62,7 +64,8 @@ class BaseManager:
         )
         return pretrained_word_embedding
     
-    def create_dataloader(self, config: BaseConfig, behavior_path, news_path, config_loader):
+    @staticmethod
+    def create_dataloader(config: BaseConfig, behavior_path, news_path, config_loader):
         dataset = BaseDataset(behavior_path, news_path, config)
         loader = DataLoader(
             dataset,
@@ -99,7 +102,8 @@ class BaseManager:
     # ===============
     # for init model
     # ===============
-    def create_model(self, config: BaseConfig, pretrained_word_embedding: Tensor):
+    @staticmethod
+    def create_model(config: BaseConfig, pretrained_word_embedding: Tensor):
         if config.name == "lstur":
             model = LSTUR(config, pretrained_word_embedding)
         elif config.name == "nrms":
@@ -114,7 +118,8 @@ class BaseManager:
             model = ROBUST_SENTIREC(config, pretrained_word_embedding)
         return model
     
-    def load_model_from_checkpoint(self, checkpoint_path: str, config: BaseConfig, pretrained_word_embedding: Tensor):
+    @staticmethod
+    def load_model_from_checkpoint(checkpoint_path: str, config: BaseConfig, pretrained_word_embedding: Tensor):
         if config.name == "lstur":
             model = LSTUR.load_from_checkpoint(
                 checkpoint_path, 
@@ -156,7 +161,8 @@ class BaseManager:
     # =============
     # for Trainer
     # =============
-    def create_callbacks(self, config: BaseConfig):
+    @staticmethod
+    def create_callbacks(config: BaseConfig):
         checkpoint_callback = ModelCheckpoint(
             **asdict(config.checkpoint)
         )
@@ -165,12 +171,13 @@ class BaseManager:
         )
         return checkpoint_callback, early_stop_callback
 
-    def create_logger(self, config: BaseConfig):
+    @staticmethod
+    def create_logger(config: BaseConfig):
         logger = TensorBoardLogger(**asdict(config.logger))
         return logger
 
+    @staticmethod
     def create_trainer(
-            self, 
             config: BaseConfig,
             callbacks: Union[list[Callback], Callback, None],
             logger: TensorBoardLogger
@@ -208,8 +215,8 @@ class BaseManager:
     # ==================
     # for Training/Test
     # ==================
+    @staticmethod
     def start_train(
-            self, 
             args: ManagerArgs,
             model: LightningModule,
             trainer: Trainer,
@@ -223,8 +230,8 @@ class BaseManager:
             ckpt_path=args.resume_ckpt_path
         )
     
+    @staticmethod
     def start_test(
-            self, 
             trainer: Trainer,
             model: LightningModule,
             test_loader: DataLoader

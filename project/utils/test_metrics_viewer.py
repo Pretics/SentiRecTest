@@ -34,10 +34,6 @@ class TestMetricsViewer:
             self.test_results = test_results
             self.set_config()
 
-    def get_result_df(self):
-        df = pd.DataFrame(self.test_results)
-        return df
-
     def set_config(
         self,
         size: Union[tuple[int, int], None] = (10, 6),
@@ -53,6 +49,10 @@ class TestMetricsViewer:
         self.ylabel = ylabel
         self.legend = legend
         self.grid = grid
+
+    def get_result_df(self):
+        df = pd.DataFrame(self.test_results)
+        return df
 
     def show(self):
         self.plt_show(

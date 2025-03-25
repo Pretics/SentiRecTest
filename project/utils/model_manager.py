@@ -1,4 +1,3 @@
-from os import path
 from typing import Union
 
 from torch import Tensor
@@ -9,9 +8,13 @@ from pytorch_lightning import Trainer, LightningModule
 from data.dataset import BaseDataset
 from utils.base_manager import BaseManager, ManagerArgs
 from utils.configs import BaseConfig
+from utils.test_metrics_viewer import TestMetricsViewer
 
 
 class ModelManager(BaseManager):
+    """
+    BaseManager를 편하게 사용할 수 있도록 만든 클래스입니다.
+    """
     current_args: ManagerArgs
     args_list: list[ManagerArgs]
     is_multiple_args: bool
@@ -27,17 +30,20 @@ class ModelManager(BaseManager):
     checkpoint_callback: ModelCheckpoint
     trainer: Trainer
 
-    def __init__(self, args:Union[list[ManagerArgs], ManagerArgs, None], mode: str):
+    def __init__(self, args:Union[list[ManagerArgs], ManagerArgs, None], mode: str = "train"):
+        self.change_args(args, mode)
+
+    def change_args(self, args:Union[list[ManagerArgs], ManagerArgs, None], mode: str = "train"):
         if args is None:
             return
+        # single args
         elif isinstance(args, ManagerArgs):
             self.update_by_args(args, mode)
+        # multiple args
         elif type(args) == list:
             self.args_list = args
+            self.is_multiple_args = True
             self.update_by_args(args[0], mode)
-
-    def update(self):
-        self.update_by_args(self.current_args, self.mode)
 
     def update_by_args(self, args: ManagerArgs, mode: str):
         # configs
@@ -67,32 +73,73 @@ class ModelManager(BaseManager):
             # init trainer
             self.trainer = self.create_test_trainer(self.config)
 
-    def change_to_train(self, resume: str):
-        self.current_args.resume_ckpt_path = resume
-        self.mode = "train"
-        self.update()
+    def change_to_train(self, resume_ckpt_path: str):
+        """
+        `resume_ckpt_path`의 `ckpt` 파일은 `self.current_args.config`파일로 생성된 모델이어야 합니다.<br/>
+        `self.current_args`를 바꾸려면 `change_args(args, mode)` 를 사용해주세요.
+        """
+        self.current_args.resume_ckpt_path = resume_ckpt_path
+        self.update_by_args(self.current_args, "train")
 
-    def change_to_test(self, ckpt_filename):
-        self.current_args.test_ckpt_path = path.join(self.config.checkpoint.dirpath, ckpt_filename)
-        self.mode = "test"
-        self.update()
+    def change_to_test(self, test_ckpt_path):
+        """
+        `test_ckpt_path`의 `ckpt` 파일은 `self.current_args.config`파일로 생성된 모델이어야 합니다.<br/>
+        `self.current_args`를 바꾸려면 `change_args(args, mode)` 를 사용해주세요.
+        """
+        self.current_args.test_ckpt_path = test_ckpt_path
+        self.update_by_args(self.current_args, "test")
     
     def fit(self):
+        """
+        ModelManager에 설정한 멤버 변수로 학습을 진행합니다.
+        학습 완료 후 가장 평가가 좋은 ckpt경로를 반환합니다.
+        """
         self.trainer.fit(
             model=self.model, 
             train_dataloaders=self.train_loader, 
             val_dataloaders=self.val_loader,
             ckpt_path=self.current_args.resume_ckpt_path
         )
-
+        return self.checkpoint_callback.best_model_path
+    
     def fit_all(self):
+        """
+        다수의 args를 통해 여러 모델의 학습을 순차적으로 진행합니다.
+        """
         if self.is_multiple_args == False:
-            print("args.config를 1개만 입력했을 경우 .fit() 함수를 사용해주세요.")
+            print("[Warning] args.config를 1개만 입력했을 경우 .fit() 함수를 사용해주세요.")
             return
         
+        best_ckpt_paths = []
         for args in self.args_list:
-            self.update_by_args()
-
+            self.update_by_args(args, "train")
+            ckpt_path = self.fit()
+            best_ckpt_paths.append(ckpt_path)
+        return best_ckpt_paths
+    
     def test(self):
-        self.test_result = self.start_test(self.trainer, self.model, self.test_loader)
-        return self.test_result
+        test_result = self.start_test(self.trainer, self.model, self.test_loader)
+        exp_name = f"{self.trainer.logger.name}#{self.trainer.logger.version}"
+        return { exp_name: test_result[0] }
+    
+    def test_all(self, ckpt_paths):
+        """
+        다수의 args와 ckpt를 통해 여러 모델의 학습을 순차적으로 진행합니다.<br/>
+        ckpt_paths는 동일한 인덱스의 args.test_ckpt_path로 자동 매핑됩니다. 
+        """
+        test_results = {}
+        for index, args in enumerate(self.args_list):
+            args.test_ckpt_path = ckpt_paths[index]
+            self.update_by_args(args, "test")
+            test_result = self.test()
+            test_results.update(test_result)
+        return test_results
+
+    def train_test_all(self):
+        """
+        다수의 args로 모델 생성, 학습, 평가, 시각화 과정을 자동으로 진행합니다.
+        """
+        ckpt_paths = self.fit_all()
+        test_results = self.test_all(ckpt_paths)
+        result_viewer = TestMetricsViewer(test_results)
+        result_viewer.show()
