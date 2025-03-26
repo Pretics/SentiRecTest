@@ -68,7 +68,10 @@ class ModelManager(BaseManager):
             # load data
             self.test_dataset, self.test_loader = self.create_test_dataloader(self.config)
             # init model
-            self.model = self.load_model_from_checkpoint(args.test_ckpt_path, self.config, self.pretrained_word_embedding)
+            if args.test_ckpt_path is None:
+                self.model = self.create_model(self.config, self.pretrained_word_embedding)
+            else:
+                self.model = self.load_model_from_checkpoint(args.test_ckpt_path, self.config, self.pretrained_word_embedding)
             # init trainer
             self.trainer = self.create_test_trainer(self.config)
 
