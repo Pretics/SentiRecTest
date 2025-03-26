@@ -3,10 +3,21 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import csv
 import random
+from dataclasses import dataclass
+
+@dataclass
+class PrepBehaviorArgs:
+    train_behavior_path: str
+    test_behavior_path: str
+    train_out_dir: str
+    test_out_dir: str
+    user2int_path: str
+    split_test_size: float
+    n_negative: int
 
 # helper to load map (e.g. user-index) as dict
-def load_idx_map_as_dict(file_name):
-    with open(file_name, 'r') as file:
+def load_idx_map_as_dict(file_path):
+    with open(file_path, 'r') as file:
         dictionary = {}
         lines = file.readlines()
         for line in tqdm(lines):
@@ -19,8 +30,8 @@ def load_idx_map_as_dict(file_name):
 def generate_training_data(args, behavior, out_dir):
     print("preparing training data")
     random.seed(1234)
-    with open(path.join(out_dir, "train_behavior.tsv"), 'w', newline='') as train_out:
-        train_writer = csv.writer(train_out, delimiter='\t')
+    with open(path.join(out_dir, "train_behavior.tsv"), 'w', newline='') as train_out_file:
+        train_writer = csv.writer(train_out_file, delimiter='\t')
         user2int = {}
         for b in tqdm(behavior): 
             imp_id, userid, imp_time, click, imps = b.strip().split("\t")
@@ -45,8 +56,8 @@ def generate_training_data(args, behavior, out_dir):
 # <uid>,<news ids of clickhistory>,<candidate ids><click mask>
 def generate_eval_data(behavior, out_dir, out_file_name, user2int):
     print("preparing eval data")
-    with open(path.join(out_dir, out_file_name), 'w', newline='') as eval_out:
-        eval_writer = csv.writer(eval_out, delimiter='\t')
+    with open(path.join(out_dir, out_file_name), 'w', newline='') as eval_out_file:
+        eval_writer = csv.writer(eval_out_file, delimiter='\t')
         for b in tqdm(behavior): 
             imp_id, userid, imp_time, click, imps = b.strip().split("\t")
             impressions =  " ".join([x[:-2] for x in imps.strip().split(" ")])
@@ -55,19 +66,18 @@ def generate_eval_data(behavior, out_dir, out_file_name, user2int):
             eval_writer.writerow(out)
 
 def prep_behavior(args):
-    if(args.mode == "train"):
-        with open(args.in_file, 'r') as in_file:
-            behavior = in_file.readlines()
-            if (args.split == 0):
-                generate_training_data(args, behavior, args.out_dir)
-            else:
-                train_behavior, val_behavior = train_test_split(behavior,test_size=args.split, random_state=1234)
-                user2int = generate_training_data(args, train_behavior, args.out_dir)
-                generate_eval_data(val_behavior, args.out_dir, "val_behavior.tsv", user2int)
-    elif(args.mode == "test"):
-        user2int = load_idx_map_as_dict(args.user2int)
-        with open(args.in_file, 'r') as in_file:
-            behavior = in_file.readlines()
-            generate_eval_data(behavior, args.out_dir, "test_behavior.tsv", user2int)
+    with open(args.train_behavior_path, 'r') as train_behaviors_file:
+        behavior = train_behaviors_file.readlines()
+
+    if (args.split_test_size == 0):
+        generate_training_data(args, behavior, args.train_out_dir)
     else:
-        print("Wrong mode!")
+        train_behavior, val_behavior = train_test_split(behavior,test_size=args.split_test_size, random_state=1234)
+        user2int = generate_training_data(args, train_behavior, args.train_out_dir)
+        generate_eval_data(val_behavior, args.train_out_dir, "val_behavior.tsv", user2int)
+
+    user2int = load_idx_map_as_dict(args.user2int_path)
+
+    with open(args.test_behavior_path, 'r') as test_behaviors_file:
+        behavior = test_behaviors_file.readlines()
+        generate_eval_data(behavior, args.test_out_dir, "test_behavior.tsv", user2int)
