@@ -21,14 +21,11 @@ test_news: "test/parsed_news.tsv"
 user2int: "train/user2int.tsv"
 word2int: "test/word2int.tsv"
 category2int: "train/category2int.tsv"
-# word embedding weights --> here use the embedding_weights 
-# resulting after the test news processing
-# so link to <test_dir>/embedding_weights.csv
 embedding_weights: "test/embedding_weights.csv"
 
-max_history: 200  # Number of sampled click history for each user
-num_words_title: 100
-num_words_abstract: 100
+max_history: 50  # Number of sampled click history for each user
+num_words_title: 20
+num_words_abstract: 50
 num_categories: 275
 
 
@@ -82,7 +79,7 @@ early_stop:
 train_dataloader:
   num_workers: 0
   persistent_workers: False
-  batch_size: 1
+  batch_size: 8
   #shuffle: True
   drop_last: True
 val_dataloader:

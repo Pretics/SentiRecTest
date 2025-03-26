@@ -8,7 +8,6 @@ from pytorch_lightning import Trainer, LightningModule
 from data.dataset import BaseDataset
 from utils.base_manager import BaseManager, ManagerArgs
 from utils.configs import BaseConfig
-from utils.test_metrics_viewer import TestMetricsViewer
 
 
 class ModelManager(BaseManager):
@@ -137,9 +136,8 @@ class ModelManager(BaseManager):
 
     def train_test_all(self):
         """
-        다수의 args로 모델 생성, 학습, 평가, 시각화 과정을 자동으로 진행합니다.
+        다수의 args로 모델 생성, 학습, 평가 과정을 자동으로 진행합니다.
         """
         ckpt_paths = self.fit_all()
         test_results = self.test_all(ckpt_paths)
-        result_viewer = TestMetricsViewer(test_results)
-        result_viewer.show()
+        return test_results
