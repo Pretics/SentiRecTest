@@ -25,6 +25,7 @@ from utils.configs import BaseConfig, load_config_from_yaml
 @dataclass
 class ManagerArgs:
     """
+    `@dataclass`<br/>
     ``config``: config파일 경로 <br/>
     ``resume_ckpt_path``: 학습을 이어서 할 ckpt파일 경로 <br/>
     ``test_ckpt_path``: 테스트를 진행할 모델의 ckpt파일 경로
