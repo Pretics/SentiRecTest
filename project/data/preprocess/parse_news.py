@@ -25,5 +25,4 @@ args = parser.parse_args()
 
 # prep embedings/vocab
 embeddings = prep_news.process_word_embeddings(args.word_embeddings)
-
 prep_news.prep_news(args, embeddings)

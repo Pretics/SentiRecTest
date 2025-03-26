@@ -2,10 +2,11 @@ from os import path
 from tqdm import tqdm
 import csv
 from nltk.tokenize import word_tokenize
-import csv
 from transformers import pipeline
+from transformers.pipelines import Pipeline
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from dataclasses import dataclass
+import numpy as np
 
 @dataclass
 class PrepNewsArgs:
@@ -18,23 +19,52 @@ class PrepNewsArgs:
     max_abstract: int
 
 # generate word2int + extract embedding weights
-def process_word_embeddings(word_embeddings_file):
-    with open(word_embeddings_file, 'r', encoding='utf-8') as wf:
-        print("preparing/processing word-embeddings") 
+def process_word_embeddings(word_embeddings_path):
+    with open(word_embeddings_path, 'r', encoding='utf-8') as wf:
+        print("preparing/processing word-embeddings")
         word_embeddings = wf.readlines()
         embeddings_map = {}
         for word_embedding in tqdm(word_embeddings):
             wdims = word_embedding.split(" ")
             embeddings_map[wdims[0]] = " ".join(wdims[1:])
-        # np.save(path.join(out_dir, "embedding_weights.npy"), np.array(weights, dtype=np.float32))
-        # with open(path.join(out_dir, 'word2int.tsv'), 'w', newline='') as file:  
-        #    word_writer = csv.writer(file, delimiter='\t')
-        #    for key, value in word2int.items():
-        #        word_writer.writerow([key, value])
         return embeddings_map
+    
+def process_word_embeddings_to_npy(word_embeddings_path, npy_out_path, word2int_out_path):
+    with open(word_embeddings_path, 'r', encoding='utf-8') as wf:
+        print("preparing/processing word-embeddings")
+        word_embeddings = wf.readlines()
+        word2int = {}
+        weights = []
+        index = 0
+        for word_embedding in tqdm(word_embeddings):
+            wdims = word_embedding.split(" ")
+            embedding_vec = np.array(wdims[1:], dtype=np.float32)
+            weights.append(embedding_vec)
+            word2int[wdims[0]] = index
+            index += 1
+        np.save(npy_out_path, np.array(weights, dtype=np.float32))
+        with open(word2int_out_path, 'w', newline='') as file:
+           word_writer = csv.writer(file, delimiter='\t')
+           for key, value in word2int.items():
+               word_writer.writerow([key, value])
 
-def load_idx_map_as_dict(file_name):
-    with open(file_name, 'r', encoding='utf-8') as file:
+def load_word_embeddings_by_npy(npy_path: str, word2int_path: str):
+    print("load word-embeddings")
+    embedding_weights = np.load(npy_path)
+    embeddings_map = {}
+    with open(word2int_path, 'r', encoding='utf-8') as file:
+        word2int = file.readlines()
+        for word2int_data in tqdm(word2int):
+            word2int_data = word2int_data.split('\t')
+            if len(word2int_data) != 2:
+                raise ValueError("something wrong")
+            word = word2int_data[0]
+            index = int(word2int_data[1])
+            embeddings_map[word] = embedding_weights[index]
+    return embeddings_map
+
+def load_idx_map_as_dict(file_path: str):
+    with open(file_path, 'r', encoding='utf-8') as file:
         dictionary = {}
         lines = file.readlines()
         for line in tqdm(lines):
@@ -42,15 +72,19 @@ def load_idx_map_as_dict(file_name):
             dictionary[key] = value
         return dictionary
 
-def load_embedding_weights(file_name):
+def load_embedding_weights(file_path: str):
     embedding_weights = []
-    with open(file_name, 'r', encoding='utf-8') as file: 
+    with open(file_path, 'r', encoding='utf-8') as file: 
         lines = file.readlines()
         for line in tqdm(lines):
             embedding_weights.append(line)
         return embedding_weights
 
-def calc_sentiment_scores(title, vader_classifier, bert_classifier):  
+def calc_sentiment_scores(
+        title: str,
+        vader_classifier: SentimentIntensityAnalyzer,
+        bert_classifier: Pipeline
+    ):  
     # vader
     vs = vader_classifier.polarity_scores(title.strip())
     vader_sentiment = vs['compound']
@@ -100,7 +134,7 @@ def process_sentence(
     return word_idxs_str
 
 def process_news_dataset(
-        args,
+        args: PrepNewsArgs,
         news_dataset_path,
         embeddings: dict,
         category2int: dict,
@@ -160,7 +194,7 @@ def save_n2int(n2int, filename, out_dir):
             word_writer.writerow([key, value])
 
 def save_train_data(
-        args,
+        args: PrepNewsArgs,
         category2int: dict,
         word2int: dict,
         embedding_weights: list
@@ -173,11 +207,7 @@ def save_train_data(
         for weights in embedding_weights:
             file.write(weights)
 
-def save_test_data(
-        args,
-        word2int: dict,
-        embedding_weights: list
-    ):
+def save_test_data(args: PrepNewsArgs, word2int: dict, embedding_weights: list):
     save_n2int(word2int, 'word2int.tsv', args.test_out_dir)
     with open(path.join(args.test_out_dir, 'embedding_weights.csv'), 'w', encoding='utf-8', newline='') as file:
         # 첫 줄에 index=0(빈칸) 패딩용 0 0 0 ... 0 가중치 추가
