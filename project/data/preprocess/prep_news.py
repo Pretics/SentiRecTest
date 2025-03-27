@@ -15,6 +15,8 @@ class PrepNewsArgs:
     train_out_dir: str
     test_out_dir: str
     word_embedding_path: str
+    word_embedding_npy_path: str
+    word_embedding_tokens_path: str
     max_title: int
     max_abstract: int
 
@@ -100,9 +102,9 @@ def calc_sentiment_scores(
 
 def process_sentence(
         sentence: str, 
-        embeddings: dict,
+        embeddings: dict[str, np.ndarray],
         word2int: dict,
-        embedding_weights: list,
+        embedding_weights: list[np.ndarray],
         max_sentence_length: int
     ):
     """
@@ -136,10 +138,10 @@ def process_sentence(
 def process_news_dataset(
         args: PrepNewsArgs,
         news_dataset_path,
-        embeddings: dict,
+        embeddings: dict[str, np.ndarray],
         category2int: dict,
         word2int: dict,
-        embedding_weights: list
+        embedding_weights: list[np.ndarray]
     ):
     processed_news = []
     news2int = {}
@@ -201,21 +203,34 @@ def save_train_data(
     ):
     save_n2int(category2int, 'category2int.tsv', args.train_out_dir)
     save_n2int(word2int, 'word2int.tsv', args.train_out_dir)
+    
+    """
     with open(path.join(args.train_out_dir, 'embedding_weights.csv'), 'w', encoding='utf-8', newline='') as file:
         # 첫 줄에 index=0(빈칸) 패딩용 0 0 0 ... 0 가중치 추가
         file.write(" ".join(["0.0"] * 300) + "\n")
         for weights in embedding_weights:
             file.write(weights)
+    """
+    embedding_vecs = np.array(embedding_weights, dtype=np.float32)
+    zero_vec = np.zeros((1, 300), dtype=np.float32)
+    result = np.concatenate([zero_vec, embedding_vecs], axis=0)
+    np.savetxt(path.join(args.train_out_dir, 'embedding_weights.csv'), result, fmt="%.6f", delimiter=" ")
 
 def save_test_data(args: PrepNewsArgs, word2int: dict, embedding_weights: list):
     save_n2int(word2int, 'word2int.tsv', args.test_out_dir)
+    """
     with open(path.join(args.test_out_dir, 'embedding_weights.csv'), 'w', encoding='utf-8', newline='') as file:
         # 첫 줄에 index=0(빈칸) 패딩용 0 0 0 ... 0 가중치 추가
         file.write(" ".join(["0.0"] * 300) + "\n")
         for weights in embedding_weights:
             file.write(weights)
+    """
+    embedding_vecs = np.array(embedding_weights, dtype=np.float32)
+    zero_vec = np.zeros((1, 300), dtype=np.float32)
+    result = np.concatenate([zero_vec, embedding_vecs], axis=0)
+    np.savetxt(path.join(args.train_out_dir, 'embedding_weights.csv'), result, fmt="%.6f", delimiter=" ")
 
-def prep_news(args: PrepNewsArgs, embeddings: dict):
+def prep_news(args: PrepNewsArgs, embeddings: dict[str, np.ndarray]):
     """
     0. 데이터셋의 news.tsv를 불러옵니다.
     1. category2int, word2int, embedding_weights를 불러오거나 생성합니다.
