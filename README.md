@@ -2,6 +2,7 @@
 ### Original Code: https://github.com/MeteSertkan/newsrec
 #### 변경 사항
 ### (정리 중)
+### (현재 이것저것 바꾼게 많아서 맞지 않거나 누락된 내용이 있습니다.)
 1. 윈도우 환경에서 정상적으로 동작하도록 수정했습니다. (Ubuntu에서 테스트는 아직 못 해봤습니다.)
 2. ``pytorch``, ``pytorch_lightning``, ``torchmetrics`` 등 학습 관련 라이브러리를 최신 버전으로 업그레이드 하고, 해당 버전에 맞게 코드 일부를 수정했습니다.
 3. 데이터 전처리를 담당하는 ``parse_behavior.py``와 ``parse_news.py``에 인자 입력 코드만 남기고 전처리 실행 코드를 ``prep_behavior.py``와 ``prep_news.py``로 분리하였으며, 코드 구조를 (개인적으로는)좀 더 가독성 좋게 변경했습니다.

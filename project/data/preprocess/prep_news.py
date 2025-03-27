@@ -2,33 +2,69 @@ from os import path
 from tqdm import tqdm
 import csv
 from nltk.tokenize import word_tokenize
-import csv
 from transformers import pipeline
+from transformers.pipelines import Pipeline
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from dataclasses import dataclass
+import numpy as np
 
-def get_news_dataset(args):
-    with open(args.in_file, 'r', encoding='utf-8') as in_file:
-        news_collection = in_file.readlines()
-    return news_collection
+@dataclass
+class PrepNewsArgs:
+    train_news_path: str
+    test_news_path: str
+    train_out_dir: str
+    test_out_dir: str
+    word_embedding_path: str
+    max_title: int
+    max_abstract: int
 
 # generate word2int + extract embedding weights
-def process_word_embeddings(word_embeddings_file):
-    with open(word_embeddings_file, 'r', encoding='utf-8') as wf:
-        print("preparing/processing word-embeddings") 
+def process_word_embeddings(word_embeddings_path):
+    with open(word_embeddings_path, 'r', encoding='utf-8') as wf:
+        print("preparing/processing word-embeddings")
         word_embeddings = wf.readlines()
         embeddings_map = {}
         for word_embedding in tqdm(word_embeddings):
             wdims = word_embedding.split(" ")
             embeddings_map[wdims[0]] = " ".join(wdims[1:])
-        # np.save(path.join(out_dir, "embedding_weights.npy"), np.array(weights, dtype=np.float32))
-        # with open(path.join(out_dir, 'word2int.tsv'), 'w', newline='') as file:  
-        #    word_writer = csv.writer(file, delimiter='\t')
-        #    for key, value in word2int.items():
-        #        word_writer.writerow([key, value])
         return embeddings_map
+    
+def process_word_embeddings_to_npy(word_embeddings_path, npy_out_path, word2int_out_path):
+    with open(word_embeddings_path, 'r', encoding='utf-8') as wf:
+        print("preparing/processing word-embeddings")
+        word_embeddings = wf.readlines()
+        word2int = {}
+        weights = []
+        index = 0
+        for word_embedding in tqdm(word_embeddings):
+            wdims = word_embedding.split(" ")
+            embedding_vec = np.array(wdims[1:], dtype=np.float32)
+            weights.append(embedding_vec)
+            word2int[wdims[0]] = index
+            index += 1
+        np.save(npy_out_path, np.array(weights, dtype=np.float32))
+        with open(word2int_out_path, 'w', newline='') as file:
+           word_writer = csv.writer(file, delimiter='\t')
+           for key, value in word2int.items():
+               word_writer.writerow([key, value])
 
-def load_idx_map_as_dict(file_name):
-    with open(file_name, 'r', encoding='utf-8') as file:
+def load_word_embeddings_by_npy(npy_path: str, word2int_path: str):
+    print("load word-embeddings")
+    embedding_weights = np.load(npy_path)
+    embeddings_map = {}
+    with open(word2int_path, 'r', encoding='utf-8') as file:
+        word2int = file.readlines()
+        for word2int_data in tqdm(word2int):
+            word2int_data = word2int_data.split('\t')
+            if len(word2int_data) != 2:
+                raise ValueError("something wrong")
+            word = word2int_data[0]
+            index = int(word2int_data[1])
+            embeddings_map[word] = embedding_weights[index]
+    return embeddings_map
+
+def load_idx_map_as_dict(file_path: str):
+    with open(file_path, 'r', encoding='utf-8') as file:
         dictionary = {}
         lines = file.readlines()
         for line in tqdm(lines):
@@ -36,15 +72,19 @@ def load_idx_map_as_dict(file_name):
             dictionary[key] = value
         return dictionary
 
-def load_embedding_weights(file_name):
+def load_embedding_weights(file_path: str):
     embedding_weights = []
-    with open(file_name, 'r', encoding='utf-8') as file: 
+    with open(file_path, 'r', encoding='utf-8') as file: 
         lines = file.readlines()
         for line in tqdm(lines):
             embedding_weights.append(line)
         return embedding_weights
 
-def calc_sentiment_scores(title, vader_classifier, bert_classifier):  
+def calc_sentiment_scores(
+        title: str,
+        vader_classifier: SentimentIntensityAnalyzer,
+        bert_classifier: Pipeline
+    ):  
     # vader
     vs = vader_classifier.polarity_scores(title.strip())
     vader_sentiment = vs['compound']
@@ -58,7 +98,7 @@ def calc_sentiment_scores(title, vader_classifier, bert_classifier):
 
     return vader_sentiment, bert_sentiment
 
-def processing_sentence(
+def process_sentence(
         sentence: str, 
         embeddings: dict,
         word2int: dict,
@@ -93,16 +133,19 @@ def processing_sentence(
 
     return word_idxs_str
 
-def processing_news_dataset(
-        args,
+def process_news_dataset(
+        args: PrepNewsArgs,
+        news_dataset_path,
         embeddings: dict,
         category2int: dict,
         word2int: dict,
         embedding_weights: list
     ):
     processed_news = []
-    news_collection = get_news_dataset(args)
     news2int = {}
+
+    with open(news_dataset_path, 'r', encoding='utf-8') as in_file:
+        news_collection = in_file.readlines()
 
     # sentiment analyzer
     dsb_sentiment_classifier = pipeline('sentiment-analysis')
@@ -116,25 +159,18 @@ def processing_news_dataset(
         newsid, category, subcategory, title, abstract, _, _, _ = news.strip().split("\t")
         if newsid not in news2int:
             news2int[newsid] = len(news2int) + 1
-        else:
-            continue
 
         # category to int
-        if (args.mode == "train"):
-            if category not in category2int:
-                category2int[category] = len(category2int) + 1
-            if subcategory not in category2int:
-                category2int[subcategory] = len(category2int) + 1
-        try:
-            category_id = category2int[category]
-            subcategory_id = category2int[subcategory]
-        except:
-            category_id = 0
-            subcategory_id = 0
+        if category not in category2int:
+            category2int[category] = len(category2int) + 1
+        if subcategory not in category2int:
+            category2int[subcategory] = len(category2int) + 1
+        category_id = category2int[category]
+        subcategory_id = category2int[subcategory]
 
         # change title, abstract to indexes
-        title_word_idxs_str = processing_sentence(title, embeddings, word2int, embedding_weights, max_title_length)
-        abstract_word_idxs_str = processing_sentence(abstract, embeddings, word2int, embedding_weights, max_abstract_length)
+        title_word_idxs_str = process_sentence(title, embeddings, word2int, embedding_weights, max_title_length)
+        abstract_word_idxs_str = process_sentence(abstract, embeddings, word2int, embedding_weights, max_abstract_length)
 
         # calc sentiments scores
         vader_sentiment, bert_sentiment = calc_sentiment_scores(title, vader_sentiment_classifier, dsb_sentiment_classifier)
@@ -151,7 +187,35 @@ def processing_news_dataset(
         ])
     return processed_news
 
-def prep_news(args, embeddings: dict):
+def save_n2int(n2int, filename, out_dir):
+    with open(path.join(out_dir, filename), 'w', encoding='utf-8', newline='') as file:
+        word_writer = csv.writer(file, delimiter='\t')
+        for key, value in n2int.items():
+            word_writer.writerow([key, value])
+
+def save_train_data(
+        args: PrepNewsArgs,
+        category2int: dict,
+        word2int: dict,
+        embedding_weights: list
+    ):
+    save_n2int(category2int, 'category2int.tsv', args.train_out_dir)
+    save_n2int(word2int, 'word2int.tsv', args.train_out_dir)
+    with open(path.join(args.train_out_dir, 'embedding_weights.csv'), 'w', encoding='utf-8', newline='') as file:
+        # 첫 줄에 index=0(빈칸) 패딩용 0 0 0 ... 0 가중치 추가
+        file.write(" ".join(["0.0"] * 300) + "\n")
+        for weights in embedding_weights:
+            file.write(weights)
+
+def save_test_data(args: PrepNewsArgs, word2int: dict, embedding_weights: list):
+    save_n2int(word2int, 'word2int.tsv', args.test_out_dir)
+    with open(path.join(args.test_out_dir, 'embedding_weights.csv'), 'w', encoding='utf-8', newline='') as file:
+        # 첫 줄에 index=0(빈칸) 패딩용 0 0 0 ... 0 가중치 추가
+        file.write(" ".join(["0.0"] * 300) + "\n")
+        for weights in embedding_weights:
+            file.write(weights)
+
+def prep_news(args: PrepNewsArgs, embeddings: dict):
     """
     0. 데이터셋의 news.tsv를 불러옵니다.
     1. category2int, word2int, embedding_weights를 불러오거나 생성합니다.
@@ -159,39 +223,28 @@ def prep_news(args, embeddings: dict):
     3. 생성한 전처리 데이터를 parsed_news.tsv에 저장합니다.
     4. category2int, word2int, embedding_weights를 저장합니다.
     """
-    if args.mode == "train": 
-        category2int = {}
-        word2int = {}
-        embedding_weights = []
-    else:
-        category2int = load_idx_map_as_dict(args.category2int)
-        word2int = load_idx_map_as_dict(args.word2int)
-        embedding_weights = load_embedding_weights(args.embedding_weights)
+    category2int = {}
+    word2int = {}
+    embedding_weights = []
     
-    with open(path.join(args.out_dir, 'parsed_news.tsv'), 'w', newline='') as news_file:  
-        news_writer = csv.writer(news_file, delimiter='\t')
-        print("preparing/processing news content")
-        processed_newsdata = processing_news_dataset(args, embeddings, category2int, word2int, embedding_weights)
+    # Train 데이터셋 전처리
+    with open(path.join(args.train_out_dir, 'parsed_news.tsv'), 'w', newline='') as train_news_file:
+        news_writer = csv.writer(train_news_file, delimiter='\t')
+        print("preparing/processing train news content")
 
         # prepare output
+        processed_newsdata = process_news_dataset(args, args.train_news_path, embeddings, category2int, word2int, embedding_weights)
         news_writer.writerows(processed_newsdata)
 
-        if args.mode == "train":
-            with open(path.join(args.out_dir, 'category2int.tsv'), 'w', encoding='utf-8', newline='') as file:
-                cat_writer = csv.writer(file, delimiter='\t')
-                for key, value in category2int.items():
-                    cat_writer.writerow([key, value])
+    save_train_data(args, category2int, word2int, embedding_weights)
 
-        with open(path.join(args.out_dir, 'word2int.tsv'), 'w', encoding='utf-8', newline='') as file:
-            word_writer = csv.writer(file, delimiter='\t')
-            for key, value in word2int.items():
-                word_writer.writerow([key, value])
+    # Test 데이터셋 전처리
+    with open(path.join(args.test_out_dir, 'parsed_news.tsv'), 'w', newline='') as test_news_file:
+        news_writer = csv.writer(test_news_file, delimiter='\t')
+        print("preparing/processing test news content")
 
-        with open(path.join(args.out_dir, 'embedding_weights.csv'), 'w', encoding='utf-8', newline='') as file:
-            if args.mode == "train":
-                # 첫 줄에 index=0(빈칸) 패딩용 0 0 0 ... 0 가중치 추가
-                padding_weights = " ".join(["0"] * 300) + "\n"
-                file.write(padding_weights)
+        # prepare output
+        processed_newsdata = process_news_dataset(args, args.test_news_path, embeddings, category2int, word2int, embedding_weights)
+        news_writer.writerows(processed_newsdata)
 
-            for weights in embedding_weights:
-                file.write(weights)
+    save_test_data(args, word2int, embedding_weights)
