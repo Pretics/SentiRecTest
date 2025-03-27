@@ -228,7 +228,7 @@ def save_test_data(args: PrepNewsArgs, word2int: dict, embedding_weights: list):
     embedding_vecs = np.array(embedding_weights, dtype=np.float32)
     zero_vec = np.zeros((1, 300), dtype=np.float32)
     result = np.concatenate([zero_vec, embedding_vecs], axis=0)
-    np.savetxt(path.join(args.train_out_dir, 'embedding_weights.csv'), result, fmt="%.6f", delimiter=" ")
+    np.savetxt(path.join(args.test_out_dir, 'embedding_weights.csv'), result, fmt="%.6f", delimiter=" ")
 
 def prep_news(args: PrepNewsArgs, embeddings: dict[str, np.ndarray]):
     """

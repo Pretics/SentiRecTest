@@ -85,7 +85,7 @@ class ModelManager(BaseManager):
             # init trainer
             self.trainer = self.create_test_trainer(self.config)
 
-    def change_to_train(self, resume_ckpt_path: str):
+    def change_to_train(self, resume_ckpt_path: str = None):
         """
         `resume_ckpt_path`의 `ckpt` 파일은 `self.current_args.config`파일로 생성된 모델이어야 합니다.<br/>
         `self.current_args`를 바꾸려면 `change_args(args, mode)` 를 사용해주세요.
