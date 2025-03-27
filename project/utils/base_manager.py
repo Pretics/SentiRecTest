@@ -55,7 +55,7 @@ class BaseManager:
     def load_embedding_weights(config: BaseConfig):
         # load embedding pre-trained embedding weights
         embedding_weights=[]
-        with open(path.join(config.preprocess_data_dir, config.embedding_weights), 'r') as file: 
+        with open(path.join(config.project_dir, config.preprocess_data_dir, config.embedding_weights), 'r') as file: 
             lines = file.readlines()
             for line in tqdm(lines):
                 weights = [float(w) for w in line.split(" ")]
@@ -67,6 +67,8 @@ class BaseManager:
     
     @staticmethod
     def create_dataloader(config: BaseConfig, behavior_path, news_path, config_loader):
+        behavior_path = path.join(config.project_dir, behavior_path)
+        news_path = path.join(config.project_dir, news_path)
         dataset = BaseDataset(behavior_path, news_path, config)
         loader = DataLoader(
             dataset,
@@ -76,8 +78,8 @@ class BaseManager:
     def create_train_dataloader(self, config: BaseConfig):
         train_dataset, train_loader = self.create_dataloader(
             config,
-            path.join(config.preprocess_data_dir, config.train_behavior),
-            path.join(config.preprocess_data_dir, config.train_news),
+            path.join(config.project_dir, config.preprocess_data_dir, config.train_behavior),
+            path.join(config.project_dir, config.preprocess_data_dir, config.train_news),
             config.train_dataloader
         )
         return train_dataset, train_loader
@@ -85,8 +87,8 @@ class BaseManager:
     def create_val_dataloader(self, config: BaseConfig):
         val_dataset, val_loader = self.create_dataloader(
             config,
-            path.join(config.preprocess_data_dir, config.val_behavior),
-            path.join(config.preprocess_data_dir, config.train_news),
+            path.join(config.project_dir, config.preprocess_data_dir, config.val_behavior),
+            path.join(config.project_dir, config.preprocess_data_dir, config.train_news),
             config.val_dataloader
         )
         return val_dataset, val_loader
@@ -94,8 +96,8 @@ class BaseManager:
     def create_test_dataloader(self, config: BaseConfig):
         test_dataset, test_loader = self.create_dataloader(
             config,
-            path.join(config.preprocess_data_dir, config.test_behavior),
-            path.join(config.preprocess_data_dir, config.test_news),
+            path.join(config.project_dir, config.preprocess_data_dir, config.test_behavior),
+            path.join(config.project_dir, config.preprocess_data_dir, config.test_news),
             config.test_dataloader
         )
         return test_dataset, test_loader
@@ -121,6 +123,7 @@ class BaseManager:
     
     @staticmethod
     def load_model_from_checkpoint(checkpoint_path: str, config: BaseConfig, pretrained_word_embedding: Tensor):
+        checkpoint_path = path.join(config.project_dir, checkpoint_path)
         if config.name == "lstur":
             model = LSTUR.load_from_checkpoint(
                 checkpoint_path, 

@@ -9,11 +9,14 @@ from data.dataset import BaseDataset
 from utils.base_manager import BaseManager, ManagerArgs
 from utils.configs import BaseConfig
 
+from os import path
+
 
 class ModelManager(BaseManager):
     """
     BaseManager를 편하게 사용할 수 있도록 만든 클래스입니다.
     """
+    project_dir: str
     current_args: ManagerArgs
     args_list: list[ManagerArgs]
     is_multiple_args: bool
@@ -29,7 +32,8 @@ class ModelManager(BaseManager):
     checkpoint_callback: ModelCheckpoint
     trainer: Trainer
 
-    def __init__(self, args:Union[list[ManagerArgs], ManagerArgs, None], mode: str = "train"):
+    def __init__(self, project_dir: str, args: Union[list[ManagerArgs], ManagerArgs, None], mode: str = "train"):
+        self.project_dir = project_dir
         self.change_args(args, mode)
 
     def change_args(self, args:Union[list[ManagerArgs], ManagerArgs, None], mode: str = "train"):
@@ -44,12 +48,18 @@ class ModelManager(BaseManager):
             self.is_multiple_args = True
             self.update_by_args(args[0], mode)
 
+    def prepare_config_paths(self, config: BaseConfig):
+        config.project_dir = self.project_dir
+        config.checkpoint.dirpath = path.join(self.project_dir, config.checkpoint.dirpath)
+        config.logger.save_dir = path.join(self.project_dir, config.logger.save_dir)
+    
     def update_by_args(self, args: ManagerArgs, mode: str):
         # configs
         assert(mode in ["train", "test"])
         self.mode = mode
         self.current_args = args
         self.config = self.load_model_config(args)
+        self.prepare_config_paths(self.config)
         # load common data
         self.pretrained_word_embedding = self.load_embedding_weights(self.config)
 
@@ -61,7 +71,7 @@ class ModelManager(BaseManager):
             if args.resume_ckpt_path is None:
                 self.model = self.create_model(self.config, self.pretrained_word_embedding)
             else:
-                self.model = self.load_model_from_checkpoint(args.resume_ckpt_path, self.config, self.pretrained_word_embedding)
+                self.model = self.load_model_from_checkpoint(self.config.project_dir, args.resume_ckpt_path, self.config, self.pretrained_word_embedding)
             # init trainer
             self.trainer, self.checkpoint_callback = self.create_train_trainer(self.config)
         elif self.mode == "test":

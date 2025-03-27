@@ -81,6 +81,7 @@ class TrainerConfig:
 class BaseConfig:
     name: str
     dataset_size: str
+    project_dir: Union[str, None]
     preprocess_data_dir: str
     seed: int
     train_behavior: str
