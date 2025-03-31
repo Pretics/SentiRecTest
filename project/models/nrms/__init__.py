@@ -76,23 +76,24 @@ class NRMS(pl.LightningModule):
 
     def forward(self, batch):
         # encode candidate news
-        print()
-        print(f'batch["c_title"]:{batch["c_title"]}')
         candidate_news_vector = self.news_encoder(batch["c_title"])
-        print(f'candidate_news_vector: {candidate_news_vector}')
+        
         # encode history 
-        print(f'batch["h_title"]:{batch["h_title"]}')
         clicked_news_vector = self.news_encoder(batch["h_title"])
-        print(f'clicked_news_vector: {clicked_news_vector}')
-        print(f'clicked_news_vector.shape: {clicked_news_vector.shape}')
         # encode user
         user_vector = self.user_encoder(clicked_news_vector)
-        print(f'user_vector: {user_vector}')
         # compute scores for each candidate news
         clicks_score = torch.bmm(
             candidate_news_vector,
             user_vector.unsqueeze(dim=-1)).squeeze(dim=-1)
-        print(f'clicks_score: {clicks_score}')
+        # print()
+        # print(f'batch["c_title"]:{batch["c_title"]}')
+        # print(f'candidate_news_vector: {candidate_news_vector}')
+        # print(f'batch["h_title"]:{batch["h_title"]}')
+        # print(f'clicked_news_vector: {clicked_news_vector}')
+        # print(f'clicked_news_vector.shape: {clicked_news_vector.shape}')
+        # print(f'user_vector: {user_vector}')
+        # print(f'clicks_score: {clicks_score}')
         return clicks_score
 
     def training_step(self, batch, batch_idx):

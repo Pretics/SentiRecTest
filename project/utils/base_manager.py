@@ -5,7 +5,7 @@ from typing import Union
 from tqdm import tqdm
 import numpy as np
 
-from torch import Tensor, from_numpy
+from torch import Tensor, device, from_numpy
 from torch.utils.data import DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -106,60 +106,60 @@ class BaseManager:
     # for init model
     # ===============
     @staticmethod
-    def create_model(config: BaseConfig, pretrained_word_embedding: Tensor):
+    def create_model(config: BaseConfig, pretrained_word_embedding: Tensor, run_device: device):
         if config.name == "lstur":
-            model = LSTUR(config, pretrained_word_embedding)
+            model = LSTUR(config, pretrained_word_embedding).to(run_device)
         elif config.name == "nrms":
-            model = NRMS(config, pretrained_word_embedding)
+            model = NRMS(config, pretrained_word_embedding).to(run_device)
         elif config.name == "naml":
-            model = NAML(config, pretrained_word_embedding)
+            model = NAML(config, pretrained_word_embedding).to(run_device)
         elif config.name == "naml_simple":
-            model = NAML_Simple(config, pretrained_word_embedding)
+            model = NAML_Simple(config, pretrained_word_embedding).to(run_device)
         elif config.name == "sentirec":
-            model = SENTIREC(config, pretrained_word_embedding)
+            model = SENTIREC(config, pretrained_word_embedding).to(run_device)
         elif config.name == "robust_sentirec":
-            model = ROBUST_SENTIREC(config, pretrained_word_embedding)
+            model = ROBUST_SENTIREC(config, pretrained_word_embedding).to(run_device)
         return model
     
     @staticmethod
-    def load_model_from_checkpoint(checkpoint_path: str, config: BaseConfig, pretrained_word_embedding: Tensor):
+    def load_model_from_checkpoint(checkpoint_path: str, config: BaseConfig, pretrained_word_embedding: Tensor, run_device: device):
         checkpoint_path = path.join(config.project_dir, checkpoint_path)
         if config.name == "lstur":
             model = LSTUR.load_from_checkpoint(
                 checkpoint_path, 
                 config=config, 
                 pretrained_word_embedding=pretrained_word_embedding
-            )
+            ).to(run_device)
         elif config.name == "nrms":
             model = NRMS.load_from_checkpoint(
                 checkpoint_path, 
                 config=config, 
                 pretrained_word_embedding=pretrained_word_embedding
-            )
+            ).to(run_device)
         elif config.name == "naml":
             model = NAML.load_from_checkpoint(
                 checkpoint_path, 
                 config=config, 
                 pretrained_word_embedding=pretrained_word_embedding
-            )
+            ).to(run_device)
         elif config.name == "naml_simple":
             model = NAML_Simple.load_from_checkpoint(
                 checkpoint_path, 
                 config=config, 
                 pretrained_word_embedding=pretrained_word_embedding
-            )
+            ).to(run_device)
         elif config.name == "sentirec":
             model = SENTIREC.load_from_checkpoint(
                 checkpoint_path, 
                 config=config, 
                 pretrained_word_embedding=pretrained_word_embedding
-            )
+            ).to(run_device)
         elif config.name == "robust_sentirec":
             model = ROBUST_SENTIREC.load_from_checkpoint(
                 checkpoint_path, 
                 config=config, 
                 pretrained_word_embedding=pretrained_word_embedding
-            )
+            ).to(run_device)
         return model
 
     # =============

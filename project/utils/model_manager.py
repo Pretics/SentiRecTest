@@ -1,6 +1,6 @@
 from typing import Union
 
-from torch import Tensor
+from torch import Tensor, device, cuda
 from torch.utils.data import DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning import Trainer, LightningModule
@@ -31,9 +31,11 @@ class ModelManager(BaseManager):
     model: LightningModule
     checkpoint_callback: ModelCheckpoint
     trainer: Trainer
+    run_device: device
 
     def __init__(self, project_dir: str, args: Union[list[ManagerArgs], ManagerArgs, None], mode: str = "train"):
         self.project_dir = project_dir
+        self.run_device = device("cuda" if cuda.is_available() else "cpu")
         self.change_args(args, mode)
 
     def change_args(self, args:Union[list[ManagerArgs], ManagerArgs, None], mode: str = "train"):
@@ -69,9 +71,9 @@ class ModelManager(BaseManager):
             self.val_dataset, self.val_loader = self.create_val_dataloader(self.config)
             # init model
             if args.resume_ckpt_path is None:
-                self.model = self.create_model(self.config, self.pretrained_word_embedding)
+                self.model = self.create_model(self.config, self.pretrained_word_embedding, self.run_device)
             else:
-                self.model = self.load_model_from_checkpoint(self.config.project_dir, args.resume_ckpt_path, self.config, self.pretrained_word_embedding)
+                self.model = self.load_model_from_checkpoint(self.config.project_dir, args.resume_ckpt_path, self.config, self.pretrained_word_embedding, self.run_device)
             # init trainer
             self.trainer, self.checkpoint_callback = self.create_train_trainer(self.config)
         elif self.mode == "test":
@@ -79,9 +81,10 @@ class ModelManager(BaseManager):
             self.test_dataset, self.test_loader = self.create_test_dataloader(self.config)
             # init model
             if args.test_ckpt_path is None:
-                self.model = self.create_model(self.config, self.pretrained_word_embedding)
+                self.model = self.create_model(self.config, self.pretrained_word_embedding, self.run_device)
             else:
-                self.model = self.load_model_from_checkpoint(args.test_ckpt_path, self.config, self.pretrained_word_embedding)
+                self.model = self.load_model_from_checkpoint(args.test_ckpt_path, self.config, self.pretrained_word_embedding, self.run_device)
+            self.model.eval()
             # init trainer
             self.trainer = self.create_test_trainer(self.config)
 
