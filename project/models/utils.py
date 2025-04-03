@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from torch import Tensor
+
 
 class AdditiveAttention(nn.Module):
     def __init__(self, query_dim, embedding_dim):
@@ -22,12 +24,12 @@ class AdditiveAttention(nn.Module):
 
 # credits to miguelvr
 class TimeDistributed(nn.Module):
-    def __init__(self, module, batch_first=False):
+    def __init__(self, module: nn.Module, batch_first=False):
         super(TimeDistributed, self).__init__()
         self.module = module
         self.batch_first = batch_first
 
-    def forward(self, x):
+    def forward(self, x: Tensor):
 
         if len(x.size()) <= 2:
             return self.module(x)
