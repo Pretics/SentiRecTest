@@ -78,7 +78,7 @@ class TrainerConfig:
     fast_dev_run: bool
 
 @dataclass
-class BaseConfig:
+class ModelConfig:
     name: str
     dataset_size: str
     project_dir: Union[str, None]

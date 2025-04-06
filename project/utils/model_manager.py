@@ -1,4 +1,6 @@
+from os import path
 from typing import Union
+import itertools
 
 from torch import Tensor, device, cuda
 from torch.utils.data import DataLoader
@@ -7,10 +9,9 @@ from pytorch_lightning import Trainer, LightningModule
 
 from data.dataset import BaseDataset
 from utils.base_manager import BaseManager, ManagerArgs
-from utils.configs import BaseConfig
+from utils.configs import ModelConfig
 
-from os import path
-
+import pandas as pd
 
 class ModelManager(BaseManager):
     """
@@ -20,7 +21,7 @@ class ModelManager(BaseManager):
     current_args: ManagerArgs
     args_list: list[ManagerArgs]
     is_multiple_args: bool
-    config: BaseConfig
+    config: ModelConfig
     train_dataset: BaseDataset
     train_loader: DataLoader
     val_dataset: BaseDataset
@@ -33,24 +34,32 @@ class ModelManager(BaseManager):
     trainer: Trainer
     run_device: device
 
-    def __init__(self, project_dir: str, args: Union[list[ManagerArgs], ManagerArgs, None], mode: str = "train"):
+    def __init__(
+            self,
+            project_dir: str,
+            args: Union[list[ManagerArgs], ManagerArgs, None],
+            mode: str = "train",
+            prepare_immediately: bool = True):
         self.project_dir = project_dir
         self.run_device = device("cuda" if cuda.is_available() else "cpu")
-        self.change_args(args, mode)
+        self.change_args(args, mode, prepare_immediately)
 
-    def change_args(self, args:Union[list[ManagerArgs], ManagerArgs, None], mode: str = "train"):
+    def change_args(self, args:Union[list[ManagerArgs], ManagerArgs, None], mode: str = "train", prepare_immediately:bool = True):
         if args is None:
             return
         # single args
         elif isinstance(args, ManagerArgs):
-            self.update_by_args(args, mode)
+            self.is_multiple_args = False
+            if prepare_immediately:
+                self.update_by_args(args, mode)
         # multiple args
         elif type(args) == list:
             self.args_list = args
             self.is_multiple_args = True
-            self.update_by_args(args[0], mode)
+            if prepare_immediately:
+                self.update_by_args(args[0], mode)
 
-    def prepare_config_paths(self, config: BaseConfig):
+    def prepare_config_paths(self, config: ModelConfig):
         config.project_dir = self.project_dir
         config.checkpoint.dirpath = path.join(self.project_dir, config.checkpoint.dirpath)
         config.logger.save_dir = path.join(self.project_dir, config.logger.save_dir)
@@ -73,7 +82,7 @@ class ModelManager(BaseManager):
             if args.resume_ckpt_path is None:
                 self.model = self.create_model(self.config, self.pretrained_word_embedding, self.run_device)
             else:
-                self.model = self.load_model_from_checkpoint(self.config.project_dir, args.resume_ckpt_path, self.config, self.pretrained_word_embedding, self.run_device)
+                self.model = self.load_model_from_checkpoint(args.resume_ckpt_path, self.config, self.pretrained_word_embedding, self.run_device)
             # init trainer
             self.trainer, self.checkpoint_callback = self.create_train_trainer(self.config)
         elif self.mode == "test":
@@ -157,3 +166,74 @@ class ModelManager(BaseManager):
         ckpt_paths = self.fit_all()
         test_results = self.test_all(ckpt_paths)
         return test_results
+    
+    def get_batch_from_dataloader(self, index: int):
+        """
+        DataLoader는 torch.utils.data.Dataset 클래스를 상속받아 정의된 데이터셋의 인스턴스를 받아,
+        데이터를 설정한 batch size에 맞게 묶어준 뒤 iterator의 형태로 하나씩 뽑아쓸 수 있게 만들어져 있습니다.
+        따라서 iter(dataloader)로 batch data를 하나씩 뽑아볼 수 있는 iterator를 생성하고,
+        itertools로 index번째 데이터만 잘라내서 next()로 값을 뽑아내어 반환합니다.
+        """
+        iterator = iter(self.test_loader)
+        item: dict = next(itertools.islice(iterator, index, index + 1))
+        return item
+
+    def get_result_from_batch(self, batch_data: dict):
+        result: Tensor = self.model(batch_data) # model.forward(batch_data) 와 동일하게 동작합니다.
+        return result
+
+    def show_result_from_batch(self, batch_data: dict):
+        result: Tensor = self.get_result_from_batch(batch_data)
+        click_scores = result.tolist()[0]
+        ranks = []
+        labels = batch_data["labels"].tolist()[0]
+        """
+        해당시점에서 result는
+        [index 0의 score, index 2의 score, ...] 이런 데이터 형태입니다.
+        해당 인덱스가 가리키는 impression 뉴스의 label은 labels의 동일한 index위치에 저장되어 있습니다.
+        """
+        for index, label in enumerate(labels):
+            ranks.append([label, click_scores[index], index])
+        ranks.sort(key=lambda x: x[1], reverse=True)
+
+        # 헤더 출력
+        print(f"{'Rank':<5} {'Score':^10} {'Label':^6} {'index':^6}")
+        print("-" * 32)
+        # 각 row 출력
+        for rank, data in enumerate(ranks):
+            label = data[0]
+            score = data[1]
+            index = data[2]
+            print(f"{rank+1:<5} {score:^10.5f} {label:^6} {index:^6}")
+        return result
+
+    def show_result(self, index):
+        batch_data = self.get_batch_from_dataloader(index)
+        result: Tensor = self.show_result_from_batch(batch_data)
+        return result
+    
+    @staticmethod
+    def show_batch_struct(batch_data: dict):
+        print(type(batch_data))
+        print("{")
+        for key in list(batch_data.keys()):
+            value: Tensor = batch_data[key]
+            items = value.tolist()
+            inner_type = type(items[0]).__name__
+            if inner_type == "list":
+                inner_type = f"list[{type(items[0][0]).__name__}]"
+                if inner_type == "list[list]":
+                    inner_type = f"list[list[{type(items[0][0][0]).__name__}]]"
+            print(f"\t{key}:\ttype={type(value).__name__}, shape={tuple(value.shape)}, inner_type={inner_type}", end="")
+            if inner_type == int:
+                print(f", value:{items[0]}")
+            else:
+                print("")
+        print("}")
+
+    def get_word2int(self):
+        word2int_path = path.join(
+            self.config.project_dir, "data", "preprocessed_data", self.config.dataset_size, self.config.word2int
+        )
+        word2int = pd.read_csv(word2int_path, sep='\t', header=None, names=['word', 'word_index'], encoding='utf-8')
+        return word2int

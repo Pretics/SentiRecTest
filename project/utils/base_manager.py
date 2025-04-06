@@ -19,7 +19,7 @@ from models.sentirec import SENTIREC
 from models.robust_sentirec import ROBUST_SENTIREC
 
 from data.dataset import BaseDataset
-from utils.configs import BaseConfig, load_config_from_yaml
+from utils.configs import ModelConfig, load_config_from_yaml
 
 
 @dataclass
@@ -46,13 +46,13 @@ class BaseManager:
     def load_model_config(args: ManagerArgs):
         #with open(args.config_path, 'r') as ymlfile:
         #    config = yaml.load(ymlfile, Loader=yaml.FullLoader)
-        config: BaseConfig = load_config_from_yaml(args.config_path, BaseConfig)
+        config: ModelConfig = load_config_from_yaml(args.config_path, ModelConfig)
         assert(config.name in ["lstur", "nrms", "naml", "naml_simple", "sentirec", "robust_sentirec"])
         seed_everything(config.seed)
         return config
     
     @staticmethod
-    def load_embedding_weights(config: BaseConfig):
+    def load_embedding_weights(config: ModelConfig):
         # load embedding pre-trained embedding weights
         embedding_weights=[]
         with open(path.join(config.project_dir, config.preprocess_data_dir, config.embedding_weights), 'r') as file: 
@@ -66,7 +66,7 @@ class BaseManager:
         return pretrained_word_embedding
     
     @staticmethod
-    def create_dataloader(config: BaseConfig, behavior_path, news_path, config_loader):
+    def create_dataloader(config: ModelConfig, behavior_path, news_path, config_loader):
         behavior_path = path.join(config.project_dir, behavior_path)
         news_path = path.join(config.project_dir, news_path)
         dataset = BaseDataset(behavior_path, news_path, config)
@@ -75,7 +75,7 @@ class BaseManager:
             **asdict(config_loader))
         return dataset, loader
 
-    def create_train_dataloader(self, config: BaseConfig):
+    def create_train_dataloader(self, config: ModelConfig):
         train_dataset, train_loader = self.create_dataloader(
             config,
             path.join(config.project_dir, config.preprocess_data_dir, config.train_behavior),
@@ -84,7 +84,7 @@ class BaseManager:
         )
         return train_dataset, train_loader
 
-    def create_val_dataloader(self, config: BaseConfig):
+    def create_val_dataloader(self, config: ModelConfig):
         val_dataset, val_loader = self.create_dataloader(
             config,
             path.join(config.project_dir, config.preprocess_data_dir, config.val_behavior),
@@ -93,7 +93,7 @@ class BaseManager:
         )
         return val_dataset, val_loader
     
-    def create_test_dataloader(self, config: BaseConfig):
+    def create_test_dataloader(self, config: ModelConfig):
         test_dataset, test_loader = self.create_dataloader(
             config,
             path.join(config.project_dir, config.preprocess_data_dir, config.test_behavior),
@@ -106,7 +106,7 @@ class BaseManager:
     # for init model
     # ===============
     @staticmethod
-    def create_model(config: BaseConfig, pretrained_word_embedding: Tensor, run_device: device):
+    def create_model(config: ModelConfig, pretrained_word_embedding: Tensor, run_device: device):
         if config.name == "lstur":
             model = LSTUR(config, pretrained_word_embedding).to(run_device)
         elif config.name == "nrms":
@@ -122,7 +122,7 @@ class BaseManager:
         return model
     
     @staticmethod
-    def load_model_from_checkpoint(checkpoint_path: str, config: BaseConfig, pretrained_word_embedding: Tensor, run_device: device):
+    def load_model_from_checkpoint(checkpoint_path: str, config: ModelConfig, pretrained_word_embedding: Tensor, run_device: device):
         checkpoint_path = path.join(config.project_dir, checkpoint_path)
         if config.name == "lstur":
             model = LSTUR.load_from_checkpoint(
@@ -166,7 +166,7 @@ class BaseManager:
     # for Trainer
     # =============
     @staticmethod
-    def create_callbacks(config: BaseConfig):
+    def create_callbacks(config: ModelConfig):
         checkpoint_callback = ModelCheckpoint(
             **asdict(config.checkpoint)
         )
@@ -176,13 +176,13 @@ class BaseManager:
         return checkpoint_callback, early_stop_callback
 
     @staticmethod
-    def create_logger(config: BaseConfig):
+    def create_logger(config: ModelConfig):
         logger = TensorBoardLogger(**asdict(config.logger))
         return logger
 
     @staticmethod
     def create_trainer(
-            config: BaseConfig,
+            config: ModelConfig,
             callbacks: Union[list[Callback], Callback, None],
             logger: TensorBoardLogger
         ):
@@ -193,7 +193,7 @@ class BaseManager:
         )
         return trainer
 
-    def create_train_trainer(self, config: BaseConfig):
+    def create_train_trainer(self, config: ModelConfig):
         # init callbacks & logging
         checkpoint_callback, early_stop_callback = self.create_callbacks(config)
         logger = self.create_logger(config)
@@ -205,7 +205,7 @@ class BaseManager:
         )
         return trainer, checkpoint_callback
     
-    def create_test_trainer(self, config: BaseConfig):
+    def create_test_trainer(self, config: ModelConfig):
         # init logging
         logger = self.create_logger(config)
         # init trainer
