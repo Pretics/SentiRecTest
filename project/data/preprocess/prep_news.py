@@ -150,14 +150,14 @@ class PrepNews:
 
     def process_news_dataset(
             self,
-            news_dataset_path,
+            news_dataset_path: str,
             embeddings: dict[str, np.ndarray],
-            category2int: dict,
-            word2int: dict,
-            embedding_weights: list[np.ndarray]
+            category2int: dict[str, int],
+            word2int: dict[str, int],
+            embedding_weights: list[np.ndarray],
+            news2int: dict[str, int]
         ):
         processed_news = []
-        news2int = {}
 
         with open(news_dataset_path, 'r', encoding='utf-8') as in_file:
             news_collection = in_file.readlines()
@@ -218,27 +218,14 @@ class PrepNews:
         self.save_n2int(category2int, 'category2int.tsv', self.args.train_out_dir)
         self.save_n2int(word2int, 'word2int.tsv', self.args.train_out_dir)
         
-        """
-        with open(path.join(self.args.train_out_dir, 'embedding_weights.csv'), 'w', encoding='utf-8', newline='') as file:
-            # 첫 줄에 index=0(빈칸) 패딩용 0 0 0 ... 0 가중치 추가
-            file.write(" ".join(["0.0"] * 300) + "\n")
-            for weights in embedding_weights:
-                file.write(weights)
-        """
         embedding_vecs = np.array(embedding_weights, dtype=np.float32)
         zero_vec = np.zeros((1, 300), dtype=np.float32)
         result = np.concatenate([zero_vec, embedding_vecs], axis=0)
         np.savetxt(path.join(self.args.train_out_dir, 'embedding_weights.csv'), result, fmt="%.6f", delimiter=" ")
 
-    def save_test_data(self, word2int: dict, embedding_weights: list):
+    def save_test_data(self, word2int: dict[str, int], embedding_weights: list[float], news2int: dict[str, int]):
         self.save_n2int(word2int, 'word2int.tsv', self.args.test_out_dir)
-        """
-        with open(path.join(self.args.test_out_dir, 'embedding_weights.csv'), 'w', encoding='utf-8', newline='') as file:
-            # 첫 줄에 index=0(빈칸) 패딩용 0 0 0 ... 0 가중치 추가
-            file.write(" ".join(["0.0"] * 300) + "\n")
-            for weights in embedding_weights:
-                file.write(weights)
-        """
+        self.save_n2int(news2int, 'news2int.tsv', self.args.test_out_dir)
         embedding_vecs = np.array(embedding_weights, dtype=np.float32)
         zero_vec = np.zeros((1, 300), dtype=np.float32)
         result = np.concatenate([zero_vec, embedding_vecs], axis=0)
@@ -255,6 +242,7 @@ class PrepNews:
         category2int = {}
         word2int = {}
         embedding_weights = []
+        news2int = {}
 
         embeddings = self.load_word_embeddings_by_npy(self.args.word_embedding_npy_path, self.args.word_embedding_tokens_path)
         
@@ -262,9 +250,9 @@ class PrepNews:
         with open(path.join(self.args.train_out_dir, 'parsed_news.tsv'), 'w', newline='') as train_news_file:
             news_writer = csv.writer(train_news_file, delimiter='\t')
             print("preparing/processing train news content")
-
+            
             # prepare output
-            processed_newsdata = self.process_news_dataset(self.args.train_news_path, embeddings, category2int, word2int, embedding_weights)
+            processed_newsdata = self.process_news_dataset(self.args.train_news_path, embeddings, category2int, word2int, embedding_weights, news2int)
             news_writer.writerows(processed_newsdata)
 
         self.save_train_data(category2int, word2int, embedding_weights)
@@ -275,7 +263,7 @@ class PrepNews:
             print("preparing/processing test news content")
 
             # prepare output
-            processed_newsdata = self.process_news_dataset(self.args.test_news_path, embeddings, category2int, word2int, embedding_weights)
+            processed_newsdata = self.process_news_dataset(self.args.test_news_path, embeddings, category2int, word2int, embedding_weights, news2int)
             news_writer.writerows(processed_newsdata)
 
-        self.save_test_data(word2int, embedding_weights)
+        self.save_test_data(word2int, embedding_weights, news2int)

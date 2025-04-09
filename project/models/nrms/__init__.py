@@ -86,14 +86,6 @@ class NRMS(pl.LightningModule):
         clicks_score = torch.bmm(
             candidate_news_vector,
             user_vector.unsqueeze(dim=-1)).squeeze(dim=-1)
-        # print()
-        # print(f'batch["c_title"]:{batch["c_title"]}')
-        # print(f'candidate_news_vector: {candidate_news_vector}')
-        # print(f'batch["h_title"]:{batch["h_title"]}')
-        # print(f'clicked_news_vector: {clicked_news_vector}')
-        # print(f'clicked_news_vector.shape: {clicked_news_vector.shape}')
-        # print(f'user_vector: {user_vector}')
-        # print(f'clicks_score: {clicks_score}')
         return clicks_score
 
     def training_step(self, batch, batch_idx):

@@ -35,16 +35,22 @@ class ModelManager(BaseManager):
     run_device: device
 
     def __init__(
-            self,
-            project_dir: str,
-            args: Union[list[ManagerArgs], ManagerArgs, None],
-            mode: str = "train",
-            prepare_immediately: bool = True):
+        self,
+        project_dir: str,
+        args: Union[list[ManagerArgs], ManagerArgs, None],
+        mode: str = "train",
+        prepare_immediately: bool = True
+    ):
         self.project_dir = project_dir
         self.run_device = device("cuda" if cuda.is_available() else "cpu")
         self.change_args(args, mode, prepare_immediately)
 
-    def change_args(self, args:Union[list[ManagerArgs], ManagerArgs, None], mode: str = "train", prepare_immediately:bool = True):
+    def change_args(
+        self,
+        args:Union[list[ManagerArgs], ManagerArgs, None],
+        mode: str = "train",
+        prepare_immediately:bool = True
+    ):
         if args is None:
             return
         # single args
@@ -170,7 +176,7 @@ class ModelManager(BaseManager):
     def get_batch_from_dataloader(self, index: int):
         """
         DataLoader는 torch.utils.data.Dataset 클래스를 상속받아 정의된 데이터셋의 인스턴스를 받아,
-        데이터를 설정한 batch size에 맞게 묶어준 뒤 iterator의 형태로 하나씩 뽑아쓸 수 있게 만들어져 있습니다.
+        데이터를 설정한 batch size에 맞게 묶어준 뒤 iterator의 형태로 하나씩 뽑아쓸 수 있게 만들어져 있습니다.<br/>
         따라서 iter(dataloader)로 batch data를 하나씩 뽑아볼 수 있는 iterator를 생성하고,
         itertools로 index번째 데이터만 잘라내서 next()로 값을 뽑아내어 반환합니다.
         """
@@ -182,7 +188,7 @@ class ModelManager(BaseManager):
         result: Tensor = self.model(batch_data) # model.forward(batch_data) 와 동일하게 동작합니다.
         return result
 
-    def show_result_from_batch(self, batch_data: dict):
+    def show_result_from_batch(self, batch_data: dict) -> list[dict[str, int]]:
         result: Tensor = self.get_result_from_batch(batch_data)
         click_scores = result.tolist()[0]
         ranks = []
@@ -195,22 +201,29 @@ class ModelManager(BaseManager):
         for index, label in enumerate(labels):
             ranks.append([label, click_scores[index], index])
         ranks.sort(key=lambda x: x[1], reverse=True)
-
         # 헤더 출력
         print(f"{'Rank':<5} {'Score':^10} {'Label':^6} {'index':^6}")
         print("-" * 32)
+
+        sorted_result = []
         # 각 row 출력
         for rank, data in enumerate(ranks):
             label = data[0]
             score = data[1]
             index = data[2]
+            sorted_result.append({
+                'rank': rank+1,
+                'label': data[0],
+                'score': data[1],
+                'index': data[2]
+            })
             print(f"{rank+1:<5} {score:^10.5f} {label:^6} {index:^6}")
-        return result
+        return sorted_result
 
     def show_result(self, index):
         batch_data = self.get_batch_from_dataloader(index)
-        result: Tensor = self.show_result_from_batch(batch_data)
-        return result
+        sorted_result = self.show_result_from_batch(batch_data)
+        return sorted_result
     
     @staticmethod
     def show_batch_struct(batch_data: dict):
