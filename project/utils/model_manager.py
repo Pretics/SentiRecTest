@@ -220,7 +220,7 @@ class ModelManager(BaseManager):
         return sorted_result
     
     @staticmethod
-    def show_result(sorted_result):
+    def show_output(sorted_result):
         # 헤더 출력
         print(f"{'Rank':<5} {'Score':^10} {'Label':^6} {'index':^6}")
         print("-" * 32)
@@ -234,7 +234,7 @@ class ModelManager(BaseManager):
 
     def show_output_by_batch(self, batch_data: dict) -> list[dict[str, int]]:
         sorted_result = self.get_sorted_output(batch_data)
-        ModelManager.show_result(sorted_result)
+        ModelManager.show_output(sorted_result)
         return sorted_result
     
     def show_output_by_index(self, index):
