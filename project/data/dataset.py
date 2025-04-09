@@ -83,8 +83,7 @@ class BaseDataset(Dataset):
                         'c_subcategory': torch.stack([c['subcategory'] for c in candidates]).to(self.run_device),
                         'c_vader_sentiment': torch.stack([c['vader_sentiment'] for c in candidates]).to(self.run_device),
                         'c_bert_sentiment': torch.stack([c['bert_sentiment'] for c in candidates]).to(self.run_device),
-                        'labels': labels,
-                        'dummy': 'dummy_value'
+                        'labels': labels
                     }
                 )
 

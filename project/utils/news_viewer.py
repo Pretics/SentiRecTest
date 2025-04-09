@@ -23,11 +23,11 @@ class NewsViewer:
             return
         news_id = self.news2int.loc[news_index, 'news_id']
         news_data = self.news.loc[news_id]
-        print(f"News ID: {news_id}")
-        print(f"Category: {news_data['category']}")
-        print(f"SubCategory: {news_data['subcategory']}")
-        print(f"Title: {news_data['title']}")
-        print(f"Abstract: {news_data['abstract']}")
+        print(f" - News ID: {news_id}")
+        print(f" - Category: {news_data['category']}")
+        print(f" - SubCategory: {news_data['subcategory']}")
+        print(f" - Title: {news_data['title']}")
+        print(f" - Abstract: {news_data['abstract']}")
 
     def get_news_by_index(self, news_index):
         if news_index == 0:

@@ -10,6 +10,7 @@ from pytorch_lightning import Trainer, LightningModule
 from data.dataset import BaseDataset
 from utils.base_manager import BaseManager, ManagerArgs
 from utils.configs import ModelConfig
+from utils.news_viewer import NewsViewer
 
 import pandas as pd
 
@@ -33,6 +34,7 @@ class ModelManager(BaseManager):
     checkpoint_callback: ModelCheckpoint
     trainer: Trainer
     run_device: device
+    news_viewer: NewsViewer
 
     def __init__(
         self,
@@ -43,6 +45,10 @@ class ModelManager(BaseManager):
     ):
         self.project_dir = project_dir
         self.run_device = device("cuda" if cuda.is_available() else "cpu")
+        self.news_viewer = NewsViewer(
+            path.join(project_dir, "data", "MIND", "demo", "test", "news.tsv"),
+            path.join(project_dir, "data", "preprocessed_data", "demo", "test", "news2int.tsv")
+        )
         self.change_args(args, mode, prepare_immediately)
 
     def change_args(
@@ -184,12 +190,12 @@ class ModelManager(BaseManager):
         item: dict = next(itertools.islice(iterator, index, index + 1))
         return item
 
-    def get_result_from_batch(self, batch_data: dict):
+    def get_model_output_by_batch(self, batch_data: dict):
         result: Tensor = self.model(batch_data) # model.forward(batch_data) 와 동일하게 동작합니다.
         return result
-
-    def show_result_from_batch(self, batch_data: dict) -> list[dict[str, int]]:
-        result: Tensor = self.get_result_from_batch(batch_data)
+    
+    def get_sorted_output(self, batch_data: dict) -> list[dict[str, int]]:
+        result: Tensor = self.get_model_output_by_batch(batch_data)
         click_scores = result.tolist()[0]
         ranks = []
         labels = batch_data["labels"].tolist()[0]
@@ -201,28 +207,39 @@ class ModelManager(BaseManager):
         for index, label in enumerate(labels):
             ranks.append([label, click_scores[index], index])
         ranks.sort(key=lambda x: x[1], reverse=True)
-        # 헤더 출력
-        print(f"{'Rank':<5} {'Score':^10} {'Label':^6} {'index':^6}")
-        print("-" * 32)
 
         sorted_result = []
         # 각 row 출력
         for rank, data in enumerate(ranks):
-            label = data[0]
-            score = data[1]
-            index = data[2]
             sorted_result.append({
                 'rank': rank+1,
                 'label': data[0],
                 'score': data[1],
                 'index': data[2]
             })
-            print(f"{rank+1:<5} {score:^10.5f} {label:^6} {index:^6}")
         return sorted_result
+    
+    @staticmethod
+    def show_result(sorted_result):
+        # 헤더 출력
+        print(f"{'Rank':<5} {'Score':^10} {'Label':^6} {'index':^6}")
+        print("-" * 32)
+        # 각 row 출력
+        for data in sorted_result:
+            rank = data['rank']
+            label = data['label']
+            score = data['score']
+            index = data['index']
+            print(f"{rank:<5} {score:^10.5f} {label:^6} {index:^6}")
 
-    def show_result(self, index):
+    def show_output_by_batch(self, batch_data: dict) -> list[dict[str, int]]:
+        sorted_result = self.get_sorted_output(batch_data)
+        ModelManager.show_result(sorted_result)
+        return sorted_result
+    
+    def show_output_by_index(self, index):
         batch_data = self.get_batch_from_dataloader(index)
-        sorted_result = self.show_result_from_batch(batch_data)
+        sorted_result = self.show_output_by_batch(batch_data)
         return sorted_result
     
     @staticmethod
@@ -250,3 +267,42 @@ class ModelManager(BaseManager):
         )
         word2int = pd.read_csv(word2int_path, sep='\t', header=None, names=['word', 'word_index'], encoding='utf-8')
         return word2int
+    
+    def show_history(self, batch_index, sample_num):
+        sample_num = max(1, sample_num)
+        batch_data = self.get_batch_from_dataloader(batch_index)
+        news_idxs = batch_data['h_idxs'][0].tolist()
+        print("==================================================================")
+        print(f" {sample_num} Samples of History (User: {batch_data['user'].item()}) ")
+        print("==================================================================")
+        count = 0
+        print("------------------------------------------------------------------")
+        for news_idx in news_idxs:
+            if news_idx == 0:
+                continue
+            print(f"[ Sample {count+1} ]")
+            self.news_viewer.show_news_by_index(news_idx)
+            print("------------------------------------------------------------------")
+            count += 1
+            if count >= sample_num:
+                break
+
+    def show_topN_result(self, batch_index, topN):
+        topN = max(1, topN)
+        batch_data = self.get_batch_from_dataloader(batch_index)
+        news_idxs = batch_data['c_idxs'][0]
+        result = self.get_sorted_output(batch_data)
+        print("==================================================================")
+        print(f" Top {topN} Impressions Ranked by Model (User: {batch_data['user'].item()}) ")
+        print("==================================================================")
+        print("------------------------------------------------------------------")
+        for ranking_data in result[:min(topN, len(result))]:
+            rank = ranking_data['rank']
+            label = ranking_data['label']
+            score = ranking_data['score']
+            index = ranking_data['index']
+            news_idx = news_idxs[index].item()
+            
+            print(f"[ rank: {rank}, score: {score:>.5f}, label: {label} ]")
+            self.news_viewer.show_news_by_index(news_idx)
+            print("------------------------------------------------------------------")
