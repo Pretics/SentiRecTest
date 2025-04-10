@@ -11,7 +11,7 @@ class BaseDataset(Dataset):
         news_parsed = {}
         self.run_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         news2int = {}
-        news2int_path = path.join(news_path, "..", "news2int.tsv")
+        news2int_path = path.join(news_path, "..", "..", "test", "news2int.tsv")
 
         # news2int 불러오기
         with open(news2int_path, 'r') as file:

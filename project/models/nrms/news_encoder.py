@@ -14,7 +14,8 @@ class NewsEncoder(nn.Module):
             padding_idx=0)
         self.mh_selfattention = nn.MultiheadAttention(
             config.word_embedding_dim,
-            config.num_attention_heads)
+            config.num_attention_heads,
+            batch_first=True)
         self.additive_attention = AdditiveAttention(config.query_vector_dim, config.word_embedding_dim)
 
     def forward(self, title):
@@ -24,13 +25,11 @@ class NewsEncoder(nn.Module):
             p=self.config.dropout_probability,
             training=self.training)
         # multi-head self attention
-        title_vector = title_vector.permute(1, 0, 2)
         title_vector, _ = self.mh_selfattention(
             title_vector,
             title_vector,
             title_vector)
         # additive attention
-        title_vector = title_vector.permute(1, 0, 2)
         title_vector = F.dropout(title_vector,
                                            p=self.config.dropout_probability,
                                            training=self.training)
