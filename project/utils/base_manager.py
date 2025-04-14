@@ -66,7 +66,7 @@ class BaseManager:
         return pretrained_word_embedding
     
     @staticmethod
-    def create_dataloader(config: ModelConfig, behavior_path, news_path, config_loader):
+    def _create_dataloader(config: ModelConfig, behavior_path, news_path, config_loader):
         behavior_path = path.join(config.project_dir, behavior_path)
         news_path = path.join(config.project_dir, news_path)
         dataset = BaseDataset(behavior_path, news_path, config)
@@ -76,7 +76,7 @@ class BaseManager:
         return dataset, loader
 
     def create_train_dataloader(self, config: ModelConfig):
-        train_dataset, train_loader = self.create_dataloader(
+        train_dataset, train_loader = self._create_dataloader(
             config,
             path.join(config.project_dir, config.preprocess_data_dir, config.train_behavior),
             path.join(config.project_dir, config.preprocess_data_dir, config.train_news),
@@ -85,7 +85,7 @@ class BaseManager:
         return train_dataset, train_loader
 
     def create_val_dataloader(self, config: ModelConfig):
-        val_dataset, val_loader = self.create_dataloader(
+        val_dataset, val_loader = self._create_dataloader(
             config,
             path.join(config.project_dir, config.preprocess_data_dir, config.val_behavior),
             path.join(config.project_dir, config.preprocess_data_dir, config.train_news),
@@ -94,7 +94,7 @@ class BaseManager:
         return val_dataset, val_loader
     
     def create_test_dataloader(self, config: ModelConfig):
-        test_dataset, test_loader = self.create_dataloader(
+        test_dataset, test_loader = self._create_dataloader(
             config,
             path.join(config.project_dir, config.preprocess_data_dir, config.test_behavior),
             path.join(config.project_dir, config.preprocess_data_dir, config.test_news),
