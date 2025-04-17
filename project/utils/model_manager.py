@@ -1,7 +1,9 @@
 from os import path
+
 from typing import Union
 import itertools
 
+import torch.nn.functional as F
 from torch import Tensor, device, cuda
 from torch.utils.data import DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -11,8 +13,11 @@ from data.dataset import BaseDataset
 from utils.base_manager import BaseManager, ManagerArgs
 from utils.configs import ModelConfig
 from utils.news_viewer import NewsViewer
+from models.nrms import NRMS
 
+from tqdm import tqdm
 import pandas as pd
+from utils.test_manager import TestManager
 
 class ModelManager(BaseManager):
     """
@@ -306,3 +311,17 @@ class ModelManager(BaseManager):
             print(f"[ rank: {rank}, score: {score:>.5f}, label: {label} ]")
             self.news_viewer.show_news_by_index(news_idx)
             print("------------------------------------------------------------------")
+
+    def custom_test(self):
+        test_manager = TestManager(self.model.device)
+        iterator = iter(self.test_loader)
+        results = []
+        for iter_num, batch in enumerate(tqdm(iterator)):
+            batch: dict[str, list[Tensor]]
+            result = test_manager.test_step(self.model, batch)
+            results.append(result)
+            if iter_num >= 100:
+                break
+        results.append(test_manager.test_step_final())
+
+        return results
