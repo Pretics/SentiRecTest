@@ -35,21 +35,21 @@ class DatasetFrameLoader:
                 sep='\t',
                 header=None,
                 names=["imp_id", "user_id", "time", "history", "impressions"]
-            )
+            ).fillna("")
         elif version == "test":
             self.test_behaviors_df = pd.read_csv(
                 self.test_behaviors_path,
                 sep='\t',
                 header=None,
                 names=["imp_id", "user_id", "time", "history", "impressions"]
-            )
+            ).fillna("")
         elif version == "dev" and self.is_dev:
             self.dev_behaviors_df = pd.read_csv(
                 self.dev_behaviors_path,
                 sep='\t',
                 header=None,
                 names=["imp_id", "user_id", "time", "history", "impressions"]
-            )
+            ).fillna("")
 
     def load_news_df(self, version):
         """
@@ -63,21 +63,21 @@ class DatasetFrameLoader:
                 sep='\t',
                 header=None,
                 names=["news_id", "category", "subcategory", "title", "abstract", "url", "title_entities", "abstract_entities"]
-            )
+            ).fillna("")
         elif version == "test":
             self.test_news_df = pd.read_csv(
                 self.test_news_path,
                 sep='\t',
                 header=None,
                 names=["news_id", "category", "subcategory", "title", "abstract", "url", "title_entities", "abstract_entities"]
-            )
+            ).fillna("")
         elif version == "dev" and self.is_dev:
             self.dev_news_df = pd.read_csv(
                 self.dev_news_path,
                 sep='\t',
                 header=None,
                 names=["news_id", "category", "subcategory", "title", "abstract", "url", "title_entities", "abstract_entities"]
-            )
+            ).fillna("")
 
     def load_behaviors_all(self):
         print(f"loading all behaviors dataset... (version: {self.dataset_size})")

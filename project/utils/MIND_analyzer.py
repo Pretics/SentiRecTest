@@ -9,28 +9,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from nltk import word_tokenize
+from utils.dataset_frame_loader import DatasetFrameLoader
 
 class MINDAnalyzer:
     def __init__(self, dataset_size):
-        self.dataset_size = dataset_size
-        self.dataset_dir = path.join(PROJECT_DIR, "data", "MIND", dataset_size)
-        self.train_behaviors_path = path.join(self.dataset_dir, "train", "behaviors.tsv")
-        self.test_behaviors_path = path.join(self.dataset_dir, "test", "behaviors.tsv")
-        self.train_news_path = path.join(self.dataset_dir, "train", "news.tsv")
-        self.test_news_path = path.join(self.dataset_dir, "test", "news.tsv")
+        loader = DatasetFrameLoader(dataset_size, is_dev=False)
+        loader.load_all()
 
-        self.train_news_df = pd.read_csv(
-            self.train_news_path,
-            sep='\t',
-            header=None,
-            names=["news_id", "category", "subcategory", "title", "abstract", "url", "title_entities", "abstract_entities"]
-        ).fillna("")
-        self.train_behaviors_df = pd.read_csv(
-            self.train_behaviors_path,
-            sep='\t',
-            header=None,
-            names=["imp_id", "user_id", "time", "history", "impressions"]
-        ).fillna("")
+        self.train_news_df = loader.train_news_df
+        self.train_behaviors_df = loader.train_behaviors_df
+        self.test_news_df = loader.test_news_df
+        self.test_behaviors_df = loader.test_behaviors_df
 
         # title 단어 길이 계산
         self.train_news_df["title_len"] = self.train_news_df["title"].str.split().str.len()
